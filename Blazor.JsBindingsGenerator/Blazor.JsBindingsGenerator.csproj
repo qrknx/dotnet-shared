@@ -3,9 +3,15 @@
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <!-- Do not include the generator as a lib dependency -->
     <IncludeBuildOutput>false</IncludeBuildOutput>
+<!--
+https://stackoverflow.com/a/67203992
+https://github.com/dotnet/docs/issues/27661
+https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/compiler-options/errors-warnings
+WarningsNotAsErrors and DisabledWarnings doesn't help
+<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+-->
   </PropertyGroup>
 
   <ItemGroup>
