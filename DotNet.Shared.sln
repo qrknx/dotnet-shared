@@ -5,7 +5,12 @@ VisualStudioVersion = 17.0.32112.339
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Blazor.JsBindingsGenerator", "Blazor.JsBindingsGenerator\Blazor.JsBindingsGenerator.csproj", "{8FC44697-AC89-4BDA-A8F9-6C70FB0F99AB}"
 EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "SolutionItems", "SolutionItems.shproj", "{752ADBE9-EE8C-4A9E-A0C1-BB8A85902AA1}"
+EndProject
 Global
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		SolutionItems.projitems*{752adbe9-ee8c-4a9e-a0c1-bb8a85902aa1}*SharedItemsImports = 13
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU

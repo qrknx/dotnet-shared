@@ -171,6 +171,8 @@ internal class {JsBindAttribute} : Attribute
         }
     }
 
+#pragma warning disable CS8618, CS0649
+
     private struct ClassForGeneration
     {
         public TypeName Name;
@@ -214,4 +216,6 @@ internal class {JsBindAttribute} : Attribute
 
         public override int GetHashCode() => HashCode.Combine(ContainingNodePath, Id);
     }
+
+#pragma warning restore
 }
