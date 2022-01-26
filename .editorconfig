@@ -20,11 +20,6 @@ csharp_new_line_before_members_in_object_initializers = false
 #require braces to be on a new line for methods, anonymous_types, types, and lambdas (also known as "Allman" style)
 csharp_new_line_before_open_brace = all
 
-#Formatting - organize using options
-
-#do not place System.* using directives before other using directives
-dotnet_sort_system_directives_first = false
-
 #Formatting - spacing options
 
 #require NO space between a cast and the value
