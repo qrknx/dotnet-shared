@@ -6,7 +6,7 @@ public partial class BlazorJsBindingsSourceGenerator
 {
     private static string GenerateClasses(SyntaxContextReceiver receiver)
     {
-        StringBuilder source = new(@"// Auto-generated
+        StringBuilder code = new(@"// Auto-generated
 #nullable enable
 
 using System.Threading;
@@ -16,85 +16,92 @@ using Microsoft.JSInterop;
 
         foreach (ClassForGeneration classForGeneration in receiver.ClassesForGeneration)
         {
-            source.AppendLine();
+            code.AppendLine();
 
-            GenerateClass(classForGeneration, source);
+            GenerateClass(classForGeneration, code);
         }
 
-        return source.ToString();
+        return code.ToString();
     }
 
-    private static void GenerateClass(in ClassForGeneration classForGeneration, StringBuilder source)
+    private static void GenerateClass(in ClassForGeneration classForGeneration, StringBuilder code)
     {
-        source.Append($@"namespace {classForGeneration.Name.ContainingNodePath}
+        code.Append($@"namespace {classForGeneration.Name.ContainingNodePath}
 {{
 ");
 
         string access = classForGeneration.IsPublic ? "public" : "internal";
 
-        source.Append($@"    {access} static partial class {classForGeneration.Name.Id}
+        code.Append($@"    {access} static partial class {classForGeneration.Name.Id}
     {{");
 
         foreach (Signature signature in classForGeneration.Signatures)
         {
-            bool hasResult = !signature.ReturnTypeName.Equals(TypeName.Void);
+            code.AppendLine();
+            GenerateMethod(signature, classForGeneration, code);
+        }
 
-            string returnType;
-            string fullName;
+        code.Append(@"    }
+");
 
-            if (hasResult)
-            {
-                fullName = signature.ReturnTypeName.FullName;
-                returnType = $"Task<{fullName}>";
-            }
-            else
-            {
-                fullName = "";
-                returnType = "Task";
-            }
+        code.Append(@"}
+");
+    }
 
-            string normalizedName = NormalizeId(signature.JsMember);
+    private static void GenerateMethod(in Signature signature,
+                                       in ClassForGeneration classForGeneration,
+                                       StringBuilder code)
+    {
+        bool hasResult = !signature.ReturnTypeName.Equals(TypeName.Void);
 
-            source.Append($@"
-        public static async {returnType} {normalizedName}(this IJSRuntime js");
+        string returnType;
+        string fullName;
 
-            foreach (Param param in signature.Params)
-            {
-                source.Append($", {param.TypeName.FullName} {param.Name}");
-            }
+        if (hasResult)
+        {
+            fullName = signature.ReturnTypeName.FullName;
+            returnType = $"Task<{fullName}>";
+        }
+        else
+        {
+            fullName = "";
+            returnType = "Task";
+        }
 
-            source.Append(@", CancellationToken token)
+        string normalizedName = NormalizeId(signature.JsMember);
+
+        code.Append($"        public static async {returnType} {normalizedName}(this IJSRuntime js");
+
+        foreach (Param param in signature.Params)
+        {
+            code.Append($", {param.TypeName.FullName} {param.Name}");
+        }
+
+        code.Append(@", CancellationToken token)
         {
             ");
 
-            if (hasResult)
-            {
-                source.Append($"return await js.InvokeAsync<{fullName}>(");
-            }
-            else
-            {
-                source.Append("await js.InvokeVoidAsync(");
-            }
-
-            source.Append(!signature.ResetJsContext
-                              ? $"\"{classForGeneration.JsContext}.{signature.JsMember}\""
-                              : $"\"{signature.JsMember}\"")
-                  .Append(", token");
-
-            foreach (Param param in signature.Params)
-            {
-                source.Append($", {param.Name}");
-            }
-
-            source.Append(@");
+        if (hasResult)
+        {
+            code.Append($"return await js.InvokeAsync<{fullName}>(");
         }
-");
+        else
+        {
+            code.Append("await js.InvokeVoidAsync(");
         }
 
-        source.Append(@"    }
-");
+        code.Append(!signature.ResetJsContext
+                          ? $"\"{classForGeneration.JsContext}.{signature.JsMember}\""
+                          : $"\"{signature.JsMember}\"")
+              .Append(", token");
 
-        source.Append(@"}
+        foreach (Param param in signature.Params)
+        {
+            code.Append($", {param.Name}");
+        }
+
+        code.Append(@");
+        }
 ");
     }
 
