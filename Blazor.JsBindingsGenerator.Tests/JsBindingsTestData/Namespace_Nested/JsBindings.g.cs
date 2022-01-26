@@ -11,7 +11,7 @@ namespace A0.A1.A2
     {
         public static async Task<System.Int32> ShowAsync(this IJSRuntime js, System.String s, System.Object obj, CancellationToken token)
         {
-            return await js.InvokeAsync<System.Int32>("BlazorCallbacks.show", token, s, obj);
+            return await js.InvokeAsync<System.Int32>("show", token, s, obj);
         }
     }
 }
