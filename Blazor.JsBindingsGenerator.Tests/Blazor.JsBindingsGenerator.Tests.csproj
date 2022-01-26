@@ -7,8 +7,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="JsBindingsTestData\Params\JsBindings.g.cs" />
-    <Compile Remove="JsBindingsTestData\Params\Source.cs" />
+    <Compile Remove="JsBindingsTestData\AccessModifiers\JsBindings.g.cs" />
+    <Compile Remove="JsBindingsTestData\AccessModifiers\Source.cs" />
+    <Compile Remove="JsBindingsTestData\Params_ContainingParents\CustomStruct.cs" />
+    <Compile Remove="JsBindingsTestData\Params_ContainingParents\JsBindings.g.cs" />
+    <Compile Remove="JsBindingsTestData\Params_ContainingParents\Source.cs" />
+    <Compile Remove="JsBindingsTestData\Params_Single_VS_Many\CustomStruct.cs" />
+    <Compile Remove="JsBindingsTestData\Params_Single_VS_Many\JsBindings.g.cs" />
+    <Compile Remove="JsBindingsTestData\Params_Single_VS_Many\Source.cs" />
     <Compile Remove="JsBindingsTestData\NamingConventions_WithContext\JsBindings.g.cs" />
     <Compile Remove="JsBindingsTestData\NamingConventions_WithContext\Source.cs" />
     <Compile Remove="JsBindingsTestData\NamingConventions_WithoutContext\JsBindings.g.cs" />
@@ -20,8 +26,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="JsBindingsTestData\Params\JsBindings.g.cs" />
-    <EmbeddedResource Include="JsBindingsTestData\Params\Source.cs" />
+    <EmbeddedResource Include="JsBindingsTestData\AccessModifiers\JsBindings.g.cs" />
+    <EmbeddedResource Include="JsBindingsTestData\AccessModifiers\Source.cs" />
+    <EmbeddedResource Include="JsBindingsTestData\Params_ContainingParents\CustomStruct.cs" />
+    <EmbeddedResource Include="JsBindingsTestData\Params_ContainingParents\JsBindings.g.cs" />
+    <EmbeddedResource Include="JsBindingsTestData\Params_ContainingParents\Source.cs" />
+    <EmbeddedResource Include="JsBindingsTestData\Params_Single_VS_Many\CustomStruct.cs" />
+    <EmbeddedResource Include="JsBindingsTestData\Params_Single_VS_Many\JsBindings.g.cs" />
+    <EmbeddedResource Include="JsBindingsTestData\Params_Single_VS_Many\Source.cs" />
     <EmbeddedResource Include="JsBindingsTestData\NamingConventions_WithContext\JsBindings.g.cs" />
     <EmbeddedResource Include="JsBindingsTestData\NamingConventions_WithContext\Source.cs" />
     <EmbeddedResource Include="JsBindingsTestData\NamingConventions_WithoutContext\JsBindings.g.cs" />

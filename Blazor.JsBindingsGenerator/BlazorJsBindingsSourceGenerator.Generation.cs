@@ -26,13 +26,13 @@ using Microsoft.JSInterop;
 
     private static void GenerateClass(in ClassForGeneration classForGeneration, StringBuilder code)
     {
-        code.Append($@"namespace {classForGeneration.Name.ContainingNodePath}
+        code.Append($@"namespace {classForGeneration.Type.ContainingParentsPath}
 {{
 ");
 
         string access = classForGeneration.IsPublic ? "public" : "internal";
 
-        code.Append($@"    {access} static partial class {classForGeneration.Name.Id}
+        code.Append($@"    {access} static partial class {classForGeneration.Type.Id}
     {{");
 
         foreach (Signature signature in classForGeneration.Signatures)
@@ -52,14 +52,14 @@ using Microsoft.JSInterop;
                                        in ClassForGeneration classForGeneration,
                                        StringBuilder code)
     {
-        bool hasResult = !signature.ReturnTypeName.Equals(TypeName.Void);
+        bool hasResult = !signature.ReturnType.Equals(TypeView.Void);
 
         string returnType;
         string fullName;
 
         if (hasResult)
         {
-            fullName = signature.ReturnTypeName.FullName;
+            fullName = signature.ReturnType.FullName;
             returnType = $"Task<{fullName}>";
         }
         else
@@ -70,11 +70,15 @@ using Microsoft.JSInterop;
 
         string normalizedName = NormalizeId(signature.JsMember);
 
-        code.Append($"        public static async {returnType} {normalizedName}(this IJSRuntime js");
+        string access = signature.IsPublic
+            ? "public"
+            : "internal";
+
+        code.Append($"        {access} static async {returnType} {normalizedName}(this IJSRuntime js");
 
         foreach (Param param in signature.Params)
         {
-            code.Append($", {param.TypeName.FullName} {param.Name}");
+            code.Append($", {param.Type.FullName} {param.Name}");
         }
 
         code.Append(@", CancellationToken token)

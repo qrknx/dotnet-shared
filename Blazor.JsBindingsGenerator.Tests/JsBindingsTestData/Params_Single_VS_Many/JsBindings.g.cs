@@ -14,9 +14,9 @@ namespace A
             await js.InvokeVoidAsync("SingleParamAsync", token, i);
         }
 
-        public static async Task M1Async(this IJSRuntime js, System.String s, System.Int32 i, System.Object obj, CancellationToken token)
+        public static async Task ManyParamsAsync(this IJSRuntime js, System.String s, System.Int32 i, System.Object obj, CancellationToken token)
         {
-            await js.InvokeVoidAsync("M1Async", token, s, i, obj);
+            await js.InvokeVoidAsync("ManyParamsAsync", token, s, i, obj);
         }
     }
 }

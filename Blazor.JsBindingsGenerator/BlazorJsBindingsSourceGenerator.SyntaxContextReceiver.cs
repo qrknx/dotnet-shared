@@ -48,14 +48,14 @@ internal class {JsBindAttribute} : Attribute
         {
             if (IsClassForGeneration(context,
                                      out SyntaxList<AttributeListSyntax> attributeLists,
-                                     out TypeName className,
+                                     out TypeView type,
                                      out bool isPublic))
             {
                 SemanticModel semantics = context.SemanticModel;
 
                 ClassForGeneration classForGeneration = new()
                 {
-                    Name = className,
+                    Type = type,
                     IsPublic = isPublic,
                     Signatures = new(capacity: attributeLists.Sum(list => list.Attributes.Count)),
                 };
@@ -78,7 +78,7 @@ internal class {JsBindAttribute} : Attribute
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool IsClassForGeneration(GeneratorSyntaxContext context,
                                                  out SyntaxList<AttributeListSyntax> attributeLists,
-                                                 out TypeName className,
+                                                 out TypeView type,
                                                  out bool isPublic)
         {
             if (context.Node is ClassDeclarationSyntax
@@ -113,10 +113,10 @@ internal class {JsBindAttribute} : Attribute
                         containingNodePath = string.Join('.', nodes);
                     }
 
-                    className = new TypeName
+                    type = new TypeView
                     {
                         Id = identifier,
-                        ContainingNodePath = containingNodePath,
+                        ContainingParentsPath = containingNodePath,
                     };
 
                     isPublic = modifiers.Any(m => m.IsKind(SyntaxKind.PublicKeyword));
@@ -125,7 +125,7 @@ internal class {JsBindAttribute} : Attribute
                 }
             }
 
-            (attributeLists, className, isPublic) = (default, default, default);
+            (attributeLists, type, isPublic) = (default, default, default);
 
             return false;
         }
@@ -171,7 +171,7 @@ internal class {JsBindAttribute} : Attribute
                         {
                             JsMember = value,
                             Params = new List<Param>(capacity: 4),
-                            ReturnTypeName = TypeName.Void,
+                            ReturnType = TypeView.Void,
                         };
 
                         for (int i = 1; i < args.Count; ++i)
@@ -193,9 +193,9 @@ internal class {JsBindAttribute} : Attribute
                                     {
                                         if (!element.Identifier.IsKind(SyntaxKind.None))
                                         {
-                                            TypeName typeName = GetTypeName(element.Type, semantics);
+                                            TypeView type = GetTypeName(element.Type, semantics);
 
-                                            if (!typeName.IsValid)
+                                            if (!type.IsValid)
                                             {
                                                 return;
                                             }
@@ -203,7 +203,7 @@ internal class {JsBindAttribute} : Attribute
                                             signature.Params.Add(new Param
                                             {
                                                 Name = element.Identifier.ValueText,
-                                                TypeName = typeName,
+                                                Type = type,
                                             });
                                         }
                                     }
@@ -217,9 +217,9 @@ internal class {JsBindAttribute} : Attribute
                                          {
                                              Type: var type,
                                          }
-                                         && GetTypeName(type, semantics) is { IsValid: true } returnTypeName:
+                                         && GetTypeName(type, semantics) is { IsValid: true } returnType:
 
-                                    signature.ReturnTypeName = returnTypeName;
+                                    signature.ReturnType = returnType;
                                     break;
 
                                 case Returns:
@@ -248,30 +248,37 @@ internal class {JsBindAttribute} : Attribute
             }
         }
 
-        private static TypeName GetTypeName(TypeSyntax syntax, SemanticModel semantics)
+        private static TypeView GetTypeName(TypeSyntax syntax, SemanticModel semantics)
         {
             TypeInfo typeInfo = semantics.GetTypeInfo(syntax);
             ITypeSymbol? type = typeInfo.Type;
 
+            // todo
             bool isNullable = syntax is NullableTypeSyntax;
 
             string id;
-
-            // todo
-            if (type == null)
+            string containingParentsPath;
+            bool isPublic;
+            
+            if (type != null)
             {
-                id = "";
+                id = $"{type.Name}";
+                containingParentsPath = type.ContainingSymbol.ToString()!;
+                isPublic = type.DeclaredAccessibility == Accessibility.Public;
             }
             else
             {
-                id = $"{type.Name}";
+                id = "";
+                containingParentsPath = "";
+                isPublic = false;
             }
 
             return new()
             {
                 Id = id,
-                ContainingNodePath = type?.ContainingNamespace.Name ?? "",
+                ContainingParentsPath = containingParentsPath,
                 IsNullable = isNullable,
+                IsPublic = isPublic,
             };
         }
     }
@@ -280,7 +287,7 @@ internal class {JsBindAttribute} : Attribute
 
     private struct ClassForGeneration
     {
-        public TypeName Name;
+        public TypeView Type;
         public bool IsPublic;
         public List<Signature> Signatures;
         public string JsContext = "";
@@ -290,27 +297,31 @@ internal class {JsBindAttribute} : Attribute
     {
         public List<Param> Params;
         public string JsMember;
-        public TypeName ReturnTypeName;
+        public TypeView ReturnType;
         public bool ResetJsContext;
+
+        public bool IsPublic => ReturnType.IsPublic && Params.TrueForAll(p => p.Type.IsPublic);
     }
 
     private struct Param
     {
-        public TypeName TypeName;
+        public TypeView Type;
         public string Name;
     }
 
-    private struct TypeName : IEquatable<TypeName>
+    private struct TypeView : IEquatable<TypeView>
     {
-        public static readonly TypeName Void = new()
+        public static readonly TypeView Void = new()
         {
-            ContainingNodePath = "",
+            ContainingParentsPath = "",
             Id = "void",
+            IsPublic = true,
         };
 
-        public string ContainingNodePath;
+        public string ContainingParentsPath;
         public string Id;
         public bool IsNullable;
+        public bool IsPublic;
 
         public bool IsValid => Id != "";
 
@@ -320,17 +331,22 @@ internal class {JsBindAttribute} : Attribute
             {
                 string nullability = IsNullable ? "?" : "";
 
-                return ContainingNodePath != ""
-                    ? $"{ContainingNodePath}.{Id}{nullability}"
+                return ContainingParentsPath != ""
+                    ? $"{ContainingParentsPath}.{Id}{nullability}"
                     : $"{Id}{nullability}";
             }
         }
 
-        public bool Equals(TypeName other) => ContainingNodePath == other.ContainingNodePath && Id == other.Id;
+        public bool Equals(TypeView other) => ContainingParentsPath == other.ContainingParentsPath
+                                              && Id == other.Id
+                                              && IsNullable == other.IsNullable
+                                              && IsPublic == other.IsPublic;
 
-        public override bool Equals(object? obj) => obj is TypeName other && Equals(other);
+        public override bool Equals(object? obj) => obj is TypeView other && Equals(other);
 
-        public override int GetHashCode() => HashCode.Combine(ContainingNodePath, Id);
+        public override int GetHashCode() => HashCode.Combine(ContainingParentsPath, Id, IsNullable, IsPublic);
+
+        public override string ToString() => FullName;
     }
 
 #pragma warning restore
