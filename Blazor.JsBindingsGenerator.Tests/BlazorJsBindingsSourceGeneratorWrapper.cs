@@ -43,7 +43,7 @@ internal class JsBindAttribute : Attribute
         {
             GeneratedSources =
             {
-                GeneratedSource("Attributes.g.cs", GeneratedAttributes),
+                GeneratedSource(BlazorJsBindingsSourceGenerator.AttributesOutputFileName, GeneratedAttributes),
             },
         },
         // todo net6.0

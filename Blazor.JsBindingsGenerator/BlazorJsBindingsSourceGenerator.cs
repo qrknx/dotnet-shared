@@ -5,12 +5,13 @@ namespace JsBindingsGenerator;
 [Generator]
 public partial class BlazorJsBindingsSourceGenerator : ISourceGenerator
 {
+    public const string AttributesOutputFileName = "Attributes.g.cs";
     public const string OutputFileName = "JsBindings.g.cs";
 
     public void Initialize(GeneratorInitializationContext context)
     {
         context.RegisterForSyntaxNotifications(() => new SyntaxContextReceiver());
-        context.RegisterForPostInitialization(ctx => ctx.AddSource("Attributes.g.cs", AttributesToUse));
+        context.RegisterForPostInitialization(ctx => ctx.AddSource(AttributesOutputFileName, AttributesToUse));
     }
 
     public void Execute(GeneratorExecutionContext context)

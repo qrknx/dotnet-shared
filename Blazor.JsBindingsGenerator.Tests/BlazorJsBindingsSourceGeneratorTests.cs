@@ -20,27 +20,27 @@ public class BlazorJsBindingsSourceGeneratorTests
     }
 
     [Theory]
-    [ClassData(typeof(TestData))]
-    public async Task Class_Generated(IEnumerable<string> sources, string generated)
+    [ClassData(typeof(TestDataProvider))]
+    public async Task Class_Generated(TestCase testCase)
     {
         BlazorJsBindingsSourceGeneratorWrapper wrapper = new()
         {
-            WithSources = sources,
-            GeneratedJsBindings = generated,
+            WithSources = testCase.Sources,
+            GeneratedJsBindings = testCase.Generated,
         };
 
         await wrapper.RunAsync();
     }
 
-    private class TestData : TheoryData<IEnumerable<string>, string>
+    private class TestDataProvider : TheoryData<TestCase>
     {
         private const string TestDataPrefix = "Blazor.JsBindingsGenerator.Tests.JsBindingsTestData.";
 
-        public TestData()
+        public TestDataProvider()
         {
             Assembly assembly = Assembly.GetExecutingAssembly();
 
-            var data =
+            var testCases =
                 from name in assembly.GetManifestResourceNames()
                 where name.StartsWith(TestDataPrefix, StringComparison.Ordinal)
                 let caseNameLength = name.Skip(TestDataPrefix.Length).TakeWhile(c => c != '.').Count()
@@ -48,12 +48,14 @@ public class BlazorJsBindingsSourceGeneratorTests
                 let contents = ReadFile(name)
                 group (name, contents) by caseName
                 into caseFiles
-                select (caseFiles.Where(f => !IsGenerated(f.name)).Select(f => f.contents),
-                        caseFiles.Single(f => IsGenerated(f.name)).contents);
+                select new TestCase(
+                    Name: caseFiles.Key,
+                    Sources: caseFiles.Where(f => !IsGenerated(f.name)).Select(f => f.contents),
+                    Generated: caseFiles.Single(f => IsGenerated(f.name)).contents);
 
-            foreach ((IEnumerable<string> sources, string generated) in data)
+            foreach (var testCase in testCases)
             {
-                Add(sources, generated);
+                Add(testCase);
             }
 
             string ReadFile(string name)
@@ -67,5 +69,10 @@ public class BlazorJsBindingsSourceGeneratorTests
             static bool IsGenerated(string name)
                 => name.EndsWith(BlazorJsBindingsSourceGenerator.OutputFileName, StringComparison.Ordinal);
         }
+    }
+
+    public readonly record struct TestCase(string Name, IEnumerable<string> Sources, string Generated)
+    {
+        public override string ToString() => Name.TrimEnd('.');
     }
 }
