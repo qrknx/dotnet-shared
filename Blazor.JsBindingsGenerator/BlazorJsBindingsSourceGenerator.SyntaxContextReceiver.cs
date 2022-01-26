@@ -81,23 +81,41 @@ internal class {JsBindAttribute} : Attribute
                                                  out TypeName className,
                                                  out bool isPublic)
         {
-            if (context.Node is ClassDeclarationSyntax { Modifiers: var modifiers } cds
+            if (context.Node is ClassDeclarationSyntax
+                {
+                    Parent: BaseNamespaceDeclarationSyntax parent,
+                    Modifiers: var modifiers,
+                } cds
                 && modifiers.Any(m => m.IsKind(SyntaxKind.PartialKeyword))
                 && modifiers.Any(m => m.IsKind(SyntaxKind.StaticKeyword)))
             {
-                SemanticModel semanticModel = context.SemanticModel;
-
-                ISymbol? symbol = semanticModel.GetSymbolInfo(cds).Symbol;
-
-                if (symbol is {ContainingType: null}
-                    && cds.Identifier.Value is string identifier)
+                if (cds.Identifier.Value is string identifier)
                 {
                     attributeLists = cds.AttributeLists;
+
+                    string containingNodePath;
+
+                    if (parent.Parent is not BaseNamespaceDeclarationSyntax)
+                    {
+                        containingNodePath = parent.Name.ToString();
+                    }
+                    else
+                    {
+                        LinkedList<string> nodes = new();
+
+                        do
+                        {
+                            nodes.AddFirst(parent.Name.ToString());
+                            parent = (parent.Parent as BaseNamespaceDeclarationSyntax)!;
+                        } while (parent != null!);
+
+                        containingNodePath = string.Join('.', nodes);
+                    }
 
                     className = new TypeName
                     {
                         Id = identifier,
-                        ContainingNodePath = symbol.MetadataName,
+                        ContainingNodePath = containingNodePath,
                     };
 
                     isPublic = modifiers.Any(m => m.IsKind(SyntaxKind.PublicKeyword));
