@@ -37,17 +37,66 @@ internal class JsBindAttribute : Attribute
 }
 ";
 
-        await new CSharpSourceGeneratorVerifier<BlazorJsBindingsSourceGenerator>
+        CSharpSourceGeneratorVerifier<BlazorJsBindingsSourceGenerator> verifier = new()
         {
-            //TestCode = code,
             TestState =
             {
-                //Sources = { code },
                 GeneratedSources =
                 {
                     (
                         typeof(BlazorJsBindingsSourceGenerator),
                         "Attributes.g.cs",
+                        SourceText.From(generated, Encoding.UTF8)
+                    ),
+                },
+            },
+        };
+
+        await verifier.RunAsync();
+    }
+
+    [Fact]
+    public async Task Classes_Generated()
+    {
+        const string source = @"using JsBindingsGenerator;
+
+namespace A;
+
+[JsBindingContext(""BlazorCallbacks"")]
+[JsBind(""show"", Params = typeof((string s, object obj)), Returns = typeof(int), ResetContext = false)]
+public static partial class B {}
+";
+
+        const string generated = @"// Auto-generated
+#nullable enable
+
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.JSInterop;
+
+namespace A
+{
+    public static partial class B
+    {
+        public static async Task<System.Int32> ShowAsync(this IJSRuntime js, System.String s, System.Object obj, CancellationToken token)
+        {
+            return await js.InvokeAsync<System.Int32>(""show"", token, s, obj);
+        }
+    }
+}
+";
+
+        await new CSharpSourceGeneratorVerifier<BlazorJsBindingsSourceGenerator>
+        {
+            //TestCode = code,
+            TestState =
+            {
+                Sources = { source },
+                GeneratedSources =
+                {
+                    (
+                        typeof(BlazorJsBindingsSourceGenerator),
+                        "JsBindings.g.cs",
                         SourceText.From(generated, Encoding.UTF8)
                     ),
                 },

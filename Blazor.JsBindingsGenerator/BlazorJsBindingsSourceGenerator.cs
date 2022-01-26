@@ -18,9 +18,9 @@ public partial class BlazorJsBindingsSourceGenerator : ISourceGenerator
 
         if (receiver.ClassesForGeneration.Any())
         {
-            StringBuilder source = GenerateClasses(receiver);
+            string source = GenerateClasses(receiver);
 
-            context.AddSource("JsBindings.g.cs", source.ToString());
+            context.AddSource("JsBindings.g.cs", source);
         }
     }
 }

@@ -4,7 +4,7 @@ namespace JsBindingsGenerator;
 
 public partial class BlazorJsBindingsSourceGenerator
 {
-    private static StringBuilder GenerateClasses(SyntaxContextReceiver receiver)
+    private static string GenerateClasses(SyntaxContextReceiver receiver)
     {
         StringBuilder source = new(@"// Auto-generated
 #nullable enable
@@ -12,32 +12,23 @@ public partial class BlazorJsBindingsSourceGenerator
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.JSInterop;
-
 ");
 
         foreach (ClassForGeneration classForGeneration in receiver.ClassesForGeneration)
         {
+            source.AppendLine();
+
             GenerateClass(classForGeneration, source);
         }
 
-        return source;
+        return source.ToString();
     }
 
     private static void GenerateClass(in ClassForGeneration classForGeneration, StringBuilder source)
     {
-        bool inNamespace;
-
-        if (classForGeneration.Name.ContainingNodePath is not "" and var nodePath)
-        {
-            inNamespace = true;
-            source.Append($@"namespace {nodePath}
+        source.Append($@"namespace {classForGeneration.Name.ContainingNodePath}
 {{
 ");
-        }
-        else
-        {
-            inNamespace = false;
-        }
 
         string access = classForGeneration.IsPublic ? "public" : "internal";
 
@@ -73,6 +64,7 @@ using Microsoft.JSInterop;
             }
 
             source.Append(@", CancellationToken token)
+        {
             ");
 
             if (hasResult)
@@ -102,12 +94,8 @@ using Microsoft.JSInterop;
         source.Append(@"    }
 ");
 
-        if (inNamespace)
-        {
-            source.Append(@"}
-
+        source.Append(@"}
 ");
-        }
     }
 
     private static string NormalizeId(string jsId)

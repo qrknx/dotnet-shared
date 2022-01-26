@@ -18,10 +18,11 @@ public class CSharpSourceGeneratorVerifier<T> : CSharpSourceGeneratorTest<T, XUn
 
     protected override CompilationOptions CreateCompilationOptions()
     {
-        CompilationOptions options = base.CreateCompilationOptions();
-
+        var options = (CSharpCompilationOptions)base.CreateCompilationOptions();
+        
         return options
-            .WithSpecificDiagnosticOptions(options.SpecificDiagnosticOptions.SetItems(GetNullableWarnings()));
+            .WithSpecificDiagnosticOptions(options.SpecificDiagnosticOptions.SetItems(GetNullableWarnings()))
+            .WithNullableContextOptions(NullableContextOptions.Enable);
     }
 
     protected override ParseOptions CreateParseOptions()

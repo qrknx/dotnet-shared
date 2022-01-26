@@ -132,20 +132,21 @@ internal class {JsBindAttribute} : Attribute
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void ExtractGenerationInfo(AttributeSyntax attribute,
                                                   ref ClassForGeneration classForGeneration,
-                                                  SemanticModel semanticModel)
+                                                  SemanticModel semantics)
         {
-            if (semanticModel.GetSymbolInfo(attribute).Symbol is
+            SymbolInfo symbolInfo = semantics.GetSymbolInfo(attribute);
+
+            if (symbolInfo.Symbol is
                 {
-                    IsImplicitlyDeclared: true,
                     ContainingNamespace.Name: Namespace,
-                    Name: var name,
+                    ContainingType.Name: var name,
                 })
             {
                 switch (name)
                 {
                     case JsBindingContextAttribute
                         when attribute.ArgumentList is { Arguments: { Count: 1 } args }
-                             && semanticModel.GetConstantValue(args[0].Expression) is
+                             && semantics.GetConstantValue(args[0].Expression) is
                              {
                                  HasValue: true,
                                  Value: string value,
@@ -154,9 +155,12 @@ internal class {JsBindAttribute} : Attribute
                         classForGeneration.JsContext = value;
                         break;
 
+                    case JsBindingContextAttribute:
+                        return;
+
                     case JsBindAttribute
                         when attribute.ArgumentList is { Arguments: { Count: >= 1 } args }
-                             && semanticModel.GetConstantValue(args[0].Expression) is
+                             && semantics.GetConstantValue(args[0].Expression) is
                              {
                                  HasValue: true,
                                  Value: string value,
@@ -171,21 +175,87 @@ internal class {JsBindAttribute} : Attribute
 
                         for (int i = 1; i < args.Count; ++i)
                         {
-                            switch (args[i].NameColon?.Name.Identifier.ValueText)
+                            AttributeArgumentSyntax arg = args[i];
+
+                            switch (arg.NameEquals?.Name.Identifier.ValueText)
                             {
+                                case Params
+                                    when arg.Expression is TypeOfExpressionSyntax
+                                    {
+                                        Type: TupleTypeSyntax
+                                        {
+                                            Elements: var elements,
+                                        },
+                                    }:
+
+                                    foreach (TupleElementSyntax element in elements)
+                                    {
+                                        TypeName typeName = GetTypeName(element.Type, semantics);
+
+                                        if (!typeName.IsValid)
+                                        {
+                                            return;
+                                        }
+
+                                        signature.Params.Add(new Param
+                                        {
+                                            Name = element.Identifier.ValueText,
+                                            TypeName = typeName,
+                                        });
+                                    }
+                                    break;
+
                                 case Params:
+                                    return;
+
+                                case Returns
+                                    when arg.Expression is TypeOfExpressionSyntax
+                                         {
+                                             Type: var type,
+                                         }
+                                         && GetTypeName(type, semantics) is { IsValid: true } returnTypeName:
+
+                                    signature.ReturnTypeName = returnTypeName;
                                     break;
 
                                 case Returns:
+                                    return;
+
+                                case ResetContext
+                                    when semantics.GetConstantValue(arg.Expression) is
+                                    {
+                                        HasValue: true,
+                                        Value: bool resetContext,
+                                    }:
+                                    signature.ResetJsContext = resetContext;
                                     break;
 
                                 case ResetContext:
-                                    break;
+                                    return;
                             }
                         }
+
+                        classForGeneration.Signatures.Add(signature);
                         break;
+
+                    case JsBindAttribute:
+                        return;
                 }
             }
+        }
+
+        private static TypeName GetTypeName(TypeSyntax syntax, SemanticModel semantics)
+        {
+            TypeInfo typeInfo = semantics.GetTypeInfo(syntax);
+            ITypeSymbol? type = typeInfo.Type;
+
+            // todo nullability contexts
+
+            return new()
+            {
+                Id = type?.Name ?? "",
+                ContainingNodePath = type?.ContainingNamespace.Name ?? "",
+            };
         }
     }
 
@@ -223,6 +293,8 @@ internal class {JsBindAttribute} : Attribute
 
         public string ContainingNodePath;
         public string Id;
+
+        public bool IsValid => Id != "";
 
         public string FullName => ContainingNodePath != ""
             ? $"{ContainingNodePath}.{Id}"
