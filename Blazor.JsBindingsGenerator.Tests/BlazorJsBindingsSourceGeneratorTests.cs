@@ -1,6 +1,8 @@
+using System;
 using System.Text;
 using System.Threading.Tasks;
 using JsBindingsGenerator;
+using Microsoft.CodeAnalysis.Testing;
 using Microsoft.CodeAnalysis.Text;
 using Xunit;
 
@@ -8,10 +10,7 @@ namespace Blazor.JsBindingsGenerator.Tests;
 
 public class BlazorJsBindingsSourceGeneratorTests
 {
-    [Fact]
-    public async Task Attributes_Generated()
-    {
-        const string generated = @"// Auto-generated
+    private const string GeneratedAttributes = @"// Auto-generated
 #nullable enable
 
 using System;
@@ -37,17 +36,19 @@ internal class JsBindAttribute : Attribute
 }
 ";
 
+    private static readonly (Type, string, SourceText) AttributesGeneratedSource
+        = GeneratedSource("Attributes.g.cs", GeneratedAttributes);
+
+    [Fact]
+    public async Task AttributesForConsumer_Generated()
+    {
         CSharpSourceGeneratorVerifier<BlazorJsBindingsSourceGenerator> verifier = new()
         {
             TestState =
             {
                 GeneratedSources =
                 {
-                    (
-                        typeof(BlazorJsBindingsSourceGenerator),
-                        "Attributes.g.cs",
-                        SourceText.From(generated, Encoding.UTF8)
-                    ),
+                    AttributesGeneratedSource,
                 },
             },
         };
@@ -56,7 +57,7 @@ internal class JsBindAttribute : Attribute
     }
 
     [Fact]
-    public async Task Classes_Generated()
+    public async Task Class_Generated()
     {
         const string source = @"using JsBindingsGenerator;
 
@@ -80,27 +81,36 @@ namespace A
     {
         public static async Task<System.Int32> ShowAsync(this IJSRuntime js, System.String s, System.Object obj, CancellationToken token)
         {
-            return await js.InvokeAsync<System.Int32>(""show"", token, s, obj);
+            return await js.InvokeAsync<System.Int32>(""BlazorCallbacks.show"", token, s, obj);
         }
     }
 }
 ";
 
-        await new CSharpSourceGeneratorVerifier<BlazorJsBindingsSourceGenerator>
+        CSharpSourceGeneratorVerifier<BlazorJsBindingsSourceGenerator> verifier = new()
         {
-            //TestCode = code,
             TestState =
             {
                 Sources = { source },
                 GeneratedSources =
                 {
-                    (
-                        typeof(BlazorJsBindingsSourceGenerator),
-                        "JsBindings.g.cs",
-                        SourceText.From(generated, Encoding.UTF8)
-                    ),
+                    AttributesGeneratedSource,
+                    GeneratedSource("JsBindings.g.cs", generated),
                 },
             },
-        }.RunAsync();
+            Packages = new[]
+            {
+                new PackageIdentity("Microsoft.JSInterop", "5.0.13"),
+            },
+        };
+
+        await verifier.RunAsync();
     }
+
+    private static (Type, string, SourceText) GeneratedSource(string fileName, string generated) =>
+    (
+        typeof(BlazorJsBindingsSourceGenerator),
+        fileName,
+        SourceText.From(generated, Encoding.UTF8)
+    );
 }

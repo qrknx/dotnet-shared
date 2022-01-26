@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
-
+    <WarningsNotAsErrors>CS0219</WarningsNotAsErrors>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 

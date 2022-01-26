@@ -3,6 +3,7 @@ using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Testing;
+using Microsoft.CodeAnalysis.Testing;
 using Microsoft.CodeAnalysis.Testing.Verifiers;
 
 namespace Blazor.JsBindingsGenerator.Tests;
@@ -10,10 +11,15 @@ namespace Blazor.JsBindingsGenerator.Tests;
 public class CSharpSourceGeneratorVerifier<T> : CSharpSourceGeneratorTest<T, XUnitVerifier>
     where T : ISourceGenerator, new()
 {
+    public PackageIdentity[] Packages
+    {
+        init => ReferenceAssemblies = ReferenceAssemblies.AddPackages(value.ToImmutableArray());
+    }
+
     public CSharpSourceGeneratorVerifier()
     {
         // todo net6.0
-        ReferenceAssemblies = Microsoft.CodeAnalysis.Testing.ReferenceAssemblies.Net.Net50;
+        ReferenceAssemblies = ReferenceAssemblies.Net.Net50;
     }
 
     protected override CompilationOptions CreateCompilationOptions()
