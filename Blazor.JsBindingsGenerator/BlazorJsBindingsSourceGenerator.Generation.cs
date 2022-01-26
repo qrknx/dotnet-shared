@@ -2,7 +2,7 @@
 
 namespace JsBindingsGenerator;
 
-internal partial class BlazorJsBindingsSourceGenerator
+public partial class BlazorJsBindingsSourceGenerator
 {
     private static StringBuilder GenerateClasses(SyntaxContextReceiver receiver)
     {

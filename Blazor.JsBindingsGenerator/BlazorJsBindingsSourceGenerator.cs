@@ -4,7 +4,7 @@ using Microsoft.CodeAnalysis;
 namespace JsBindingsGenerator;
 
 [Generator]
-internal partial class BlazorJsBindingsSourceGenerator : ISourceGenerator
+public partial class BlazorJsBindingsSourceGenerator : ISourceGenerator
 {
     public void Initialize(GeneratorInitializationContext context)
     {

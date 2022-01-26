@@ -5,11 +5,11 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace JsBindingsGenerator;
 
-internal partial class BlazorJsBindingsSourceGenerator
+public partial class BlazorJsBindingsSourceGenerator
 {
     private const string Namespace = nameof(JsBindingsGenerator);
-    private const string JsBindingContextAttribute = nameof(JsBindingContextAttribute);
-    private const string JsBindAttribute = nameof(JsBindAttribute);
+    private const string JsBindingContextAttribute = "JsBindingContextAttribute";
+    private const string JsBindAttribute = "JsBindAttribute";
     private const string Params = "Params";
     private const string Returns = "Returns";
     private const string ResetContext = "ResetContext";
