@@ -27,7 +27,7 @@ internal class {JsBindingContextAttribute} : Attribute
     public {JsBindingContextAttribute}(string jsContext) {{}}
 }}
 
-[AttributeUsage(AttributeTargets.Class)]
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
 internal class {JsBindAttribute} : Attribute
 {{
     public Type? {Params} {{ get; init; }}
@@ -250,26 +250,25 @@ internal class {JsBindAttribute} : Attribute
             TypeInfo typeInfo = semantics.GetTypeInfo(syntax);
             ITypeSymbol? type = typeInfo.Type;
 
-            string id = type?.Name ?? "";
+            bool isNullable = syntax is NullableTypeSyntax;
+
+            string id;
 
             // todo
-            //if (type == null)
-            //{
-            //    id = "";
-            //}
-            //else if (syntax is not NullableTypeSyntax)
-            //{
-            //    id = type.Name;
-            //}
-            //else
-            //{
-            //    id = $"{type.Name}?";
-            //}
+            if (type == null)
+            {
+                id = "";
+            }
+            else
+            {
+                id = $"{type.Name}";
+            }
 
             return new()
             {
                 Id = id,
                 ContainingNodePath = type?.ContainingNamespace.Name ?? "",
+                IsNullable = isNullable,
             };
         }
     }
@@ -308,12 +307,21 @@ internal class {JsBindAttribute} : Attribute
 
         public string ContainingNodePath;
         public string Id;
+        public bool IsNullable;
 
         public bool IsValid => Id != "";
 
-        public string FullName => ContainingNodePath != ""
-            ? $"{ContainingNodePath}.{Id}"
-            : Id;
+        public string FullName
+        {
+            get
+            {
+                string nullability = IsNullable ? "?" : "";
+
+                return ContainingNodePath != ""
+                    ? $"{ContainingNodePath}.{Id}{nullability}"
+                    : $"{Id}{nullability}";
+            }
+        }
 
         public bool Equals(TypeName other) => ContainingNodePath == other.ContainingNodePath && Id == other.Id;
 

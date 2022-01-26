@@ -90,10 +90,10 @@ using Microsoft.JSInterop;
             code.Append("await js.InvokeVoidAsync(");
         }
 
-        code.Append(!signature.ResetJsContext
-                          ? $"\"{classForGeneration.JsContext}.{signature.JsMember}\""
-                          : $"\"{signature.JsMember}\"")
-              .Append(", token");
+        code.Append(classForGeneration.JsContext != "" && !signature.ResetJsContext
+                        ? $"\"{classForGeneration.JsContext}.{signature.JsMember}\""
+                        : $"\"{signature.JsMember}\"")
+            .Append(", token");
 
         foreach (Param param in signature.Params)
         {

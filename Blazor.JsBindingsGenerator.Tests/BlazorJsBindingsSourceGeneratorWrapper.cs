@@ -24,7 +24,7 @@ internal class JsBindingContextAttribute : Attribute
     public JsBindingContextAttribute(string jsContext) {}
 }
 
-[AttributeUsage(AttributeTargets.Class)]
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
 internal class JsBindAttribute : Attribute
 {
     public Type? Params { get; init; }

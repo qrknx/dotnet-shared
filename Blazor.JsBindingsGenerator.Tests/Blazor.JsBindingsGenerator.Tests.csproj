@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="JsBindingsTestData\NamingConventions_WithContext\JsBindings.g.cs" />
+    <Compile Remove="JsBindingsTestData\NamingConventions_WithContext\Source.cs" />
+    <Compile Remove="JsBindingsTestData\NamingConventions_WithoutContext\JsBindings.g.cs" />
+    <Compile Remove="JsBindingsTestData\NamingConventions_WithoutContext\Source.cs" />
     <Compile Remove="JsBindingsTestData\Namespace_FileScoped\JsBindings.g.cs" />
     <Compile Remove="JsBindingsTestData\Namespace_FileScoped\Source.cs" />
     <Compile Remove="JsBindingsTestData\Namespace_Nested\JsBindings.g.cs" />
@@ -14,6 +18,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="JsBindingsTestData\NamingConventions_WithContext\JsBindings.g.cs" />
+    <EmbeddedResource Include="JsBindingsTestData\NamingConventions_WithContext\Source.cs" />
+    <EmbeddedResource Include="JsBindingsTestData\NamingConventions_WithoutContext\JsBindings.g.cs" />
+    <EmbeddedResource Include="JsBindingsTestData\NamingConventions_WithoutContext\Source.cs" />
     <EmbeddedResource Include="JsBindingsTestData\Namespace_FileScoped\JsBindings.g.cs" />
     <EmbeddedResource Include="JsBindingsTestData\Namespace_FileScoped\Source.cs" />
     <EmbeddedResource Include="JsBindingsTestData\Namespace_Nested\JsBindings.g.cs" />
