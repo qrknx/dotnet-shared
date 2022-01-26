@@ -191,18 +191,21 @@ internal class {JsBindAttribute} : Attribute
 
                                     foreach (TupleElementSyntax element in elements)
                                     {
-                                        TypeName typeName = GetTypeName(element.Type, semantics);
-
-                                        if (!typeName.IsValid)
+                                        if (!element.Identifier.IsKind(SyntaxKind.None))
                                         {
-                                            return;
+                                            TypeName typeName = GetTypeName(element.Type, semantics);
+
+                                            if (!typeName.IsValid)
+                                            {
+                                                return;
+                                            }
+
+                                            signature.Params.Add(new Param
+                                            {
+                                                Name = element.Identifier.ValueText,
+                                                TypeName = typeName,
+                                            });
                                         }
-
-                                        signature.Params.Add(new Param
-                                        {
-                                            Name = element.Identifier.ValueText,
-                                            TypeName = typeName,
-                                        });
                                     }
                                     break;
 
