@@ -2,5 +2,5 @@
 
 namespace A;
 
-[JsBind("M1Async", Returns = typeof(int))]
+[JsBind("M1Async", Params = typeof((string s, object obj)))]
 public static partial class B {}

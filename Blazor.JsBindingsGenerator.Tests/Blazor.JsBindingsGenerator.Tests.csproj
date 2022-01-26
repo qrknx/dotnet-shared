@@ -7,6 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="JsBindingsTestData\Params\JsBindings.g.cs" />
+    <Compile Remove="JsBindingsTestData\Params\Source.cs" />
     <Compile Remove="JsBindingsTestData\NamingConventions_WithContext\JsBindings.g.cs" />
     <Compile Remove="JsBindingsTestData\NamingConventions_WithContext\Source.cs" />
     <Compile Remove="JsBindingsTestData\NamingConventions_WithoutContext\JsBindings.g.cs" />
@@ -18,6 +20,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="JsBindingsTestData\Params\JsBindings.g.cs" />
+    <EmbeddedResource Include="JsBindingsTestData\Params\Source.cs" />
     <EmbeddedResource Include="JsBindingsTestData\NamingConventions_WithContext\JsBindings.g.cs" />
     <EmbeddedResource Include="JsBindingsTestData\NamingConventions_WithContext\Source.cs" />
     <EmbeddedResource Include="JsBindingsTestData\NamingConventions_WithoutContext\JsBindings.g.cs" />
