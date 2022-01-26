@@ -5,6 +5,8 @@ namespace JsBindingsGenerator;
 [Generator]
 public partial class BlazorJsBindingsSourceGenerator : ISourceGenerator
 {
+    public const string OutputFileName = "JsBindings.g.cs";
+
     public void Initialize(GeneratorInitializationContext context)
     {
         context.RegisterForSyntaxNotifications(() => new SyntaxContextReceiver());
@@ -19,7 +21,7 @@ public partial class BlazorJsBindingsSourceGenerator : ISourceGenerator
         {
             string source = GenerateClasses(receiver);
 
-            context.AddSource("JsBindings.g.cs", source);
+            context.AddSource(OutputFileName, source);
         }
     }
 }

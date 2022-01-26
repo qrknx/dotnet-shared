@@ -51,7 +51,7 @@ internal class {JsBindAttribute} : Attribute
                                      out TypeName className,
                                      out bool isPublic))
             {
-                SemanticModel semanticModel = context.SemanticModel;
+                SemanticModel semantics = context.SemanticModel;
 
                 ClassForGeneration classForGeneration = new()
                 {
@@ -64,7 +64,7 @@ internal class {JsBindAttribute} : Attribute
                 {
                     foreach (AttributeSyntax attribute in attributeList.Attributes)
                     {
-                        ExtractGenerationInfo(attribute, ref classForGeneration, semanticModel);
+                        ExtractGenerationInfo(attribute, ref classForGeneration, semantics);
                     }
                 }
 
@@ -101,13 +101,14 @@ internal class {JsBindAttribute} : Attribute
                     }
                     else
                     {
-                        LinkedList<string> nodes = new();
+                        Stack<string> nodes = new();
+                        BaseNamespaceDeclarationSyntax? current = parent;
 
                         do
                         {
-                            nodes.AddFirst(parent.Name.ToString());
-                            parent = (parent.Parent as BaseNamespaceDeclarationSyntax)!;
-                        } while (parent != null!);
+                            nodes.Push(current.Name.ToString());
+                            current = current.Parent as BaseNamespaceDeclarationSyntax;
+                        } while (current != null);
 
                         containingNodePath = string.Join('.', nodes);
                     }
@@ -249,11 +250,25 @@ internal class {JsBindAttribute} : Attribute
             TypeInfo typeInfo = semantics.GetTypeInfo(syntax);
             ITypeSymbol? type = typeInfo.Type;
 
-            // todo nullability contexts
+            string id = type?.Name ?? "";
+
+            // todo
+            //if (type == null)
+            //{
+            //    id = "";
+            //}
+            //else if (syntax is not NullableTypeSyntax)
+            //{
+            //    id = type.Name;
+            //}
+            //else
+            //{
+            //    id = $"{type.Name}?";
+            //}
 
             return new()
             {
-                Id = type?.Name ?? "",
+                Id = id,
                 ContainingNodePath = type?.ContainingNamespace.Name ?? "",
             };
         }

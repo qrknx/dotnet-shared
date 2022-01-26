@@ -1,10 +1,11 @@
 using System;
+using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Text;
+using System.Threading.Tasks;
 using JsBindingsGenerator;
 using Microsoft.CodeAnalysis.Testing;
 using Microsoft.CodeAnalysis.Text;
-using System.Collections.Immutable;
-using System.Threading.Tasks;
 
 namespace Blazor.JsBindingsGenerator.Tests;
 
@@ -53,14 +54,23 @@ internal class JsBindAttribute : Attribute
                                                                         "5.0.13"))),
     };
 
-    public string Source
+    public IEnumerable<string> WithSources
     {
-        init => Verifier.TestState.Sources.Add(value);
+        init
+        {
+            foreach (string source in value)
+            {
+                Sources.Add(source);
+            }
+        }
     }
+
+    public SourceFileList Sources => Verifier.TestState.Sources;
 
     public string GeneratedJsBindings
     {
-        init => Verifier.TestState.GeneratedSources.Add(GeneratedSource("JsBindings.g.cs", value));
+        init => Verifier.TestState
+                        .GeneratedSources.Add(GeneratedSource(BlazorJsBindingsSourceGenerator.OutputFileName, value));
     }
 
     public async Task RunAsync() => await Verifier.RunAsync();

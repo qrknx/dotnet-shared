@@ -7,6 +7,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="JsBindingsTestData\1\JsBindings.g.cs" />
+    <Compile Remove="JsBindingsTestData\1\Source.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="JsBindingsTestData\1\JsBindings.g.cs" />
+    <EmbeddedResource Include="JsBindingsTestData\1\Source.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis" Version="4.0.1" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.SourceGenerators.Testing.XUnit" Version="1.1.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.0.0" />
