@@ -263,7 +263,7 @@ internal class {JsBindAttribute} : Attribute
             if (type != null)
             {
                 id = $"{type.Name}";
-                containingParentsPath = type.ContainingSymbol.ToString()!;
+                containingParentsPath = type.ContainingSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
                 isPublic = type.DeclaredAccessibility == Accessibility.Public;
             }
             else

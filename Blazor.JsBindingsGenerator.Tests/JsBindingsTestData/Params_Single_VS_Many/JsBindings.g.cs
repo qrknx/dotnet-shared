@@ -9,12 +9,12 @@ namespace A
 {
     public static partial class B
     {
-        public static async Task SingleParamAsync(this IJSRuntime js, System.Int32 i, CancellationToken token)
+        public static async Task SingleParamAsync(this IJSRuntime js, global::System.Int32 i, CancellationToken token)
         {
             await js.InvokeVoidAsync("SingleParamAsync", token, i);
         }
 
-        public static async Task ManyParamsAsync(this IJSRuntime js, System.String s, System.Int32 i, System.Object obj, CancellationToken token)
+        public static async Task ManyParamsAsync(this IJSRuntime js, global::System.String s, global::System.Int32 i, global::System.Object obj, CancellationToken token)
         {
             await js.InvokeVoidAsync("ManyParamsAsync", token, s, i, obj);
         }

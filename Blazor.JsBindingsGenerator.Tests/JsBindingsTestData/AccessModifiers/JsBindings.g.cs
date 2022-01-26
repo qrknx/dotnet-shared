@@ -9,14 +9,14 @@ namespace A
 {
     public static partial class B
     {
-        internal static async Task M1Async(this IJSRuntime js, A.CustomStruct s, CancellationToken token)
+        internal static async Task M1Async(this IJSRuntime js, global::A.CustomStruct s, CancellationToken token)
         {
             await js.InvokeVoidAsync("M1Async", token, s);
         }
 
-        internal static async Task<A.CustomStruct> M2Async(this IJSRuntime js, CancellationToken token)
+        internal static async Task<global::A.CustomStruct> M2Async(this IJSRuntime js, CancellationToken token)
         {
-            return await js.InvokeAsync<A.CustomStruct>("M2Async", token);
+            return await js.InvokeAsync<global::A.CustomStruct>("M2Async", token);
         }
     }
 }
@@ -25,9 +25,9 @@ namespace A
 {
     internal static partial class C
     {
-        public static async Task<System.Int32> M1Async(this IJSRuntime js, CancellationToken token)
+        public static async Task<global::System.Int32> M1Async(this IJSRuntime js, CancellationToken token)
         {
-            return await js.InvokeAsync<System.Int32>("M1Async", token);
+            return await js.InvokeAsync<global::System.Int32>("M1Async", token);
         }
     }
 }

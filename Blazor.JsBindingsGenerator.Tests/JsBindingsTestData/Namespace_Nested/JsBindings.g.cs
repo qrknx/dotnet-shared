@@ -9,9 +9,9 @@ namespace A0.A1.A2
 {
     public static partial class B
     {
-        public static async Task<System.Int32> M1Async(this IJSRuntime js, CancellationToken token)
+        public static async Task M1Async(this IJSRuntime js, CancellationToken token)
         {
-            return await js.InvokeAsync<System.Int32>("M1Async", token);
+            await js.InvokeVoidAsync("M1Async", token);
         }
     }
 }
