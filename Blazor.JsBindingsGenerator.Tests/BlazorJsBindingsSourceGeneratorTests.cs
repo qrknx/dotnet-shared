@@ -21,12 +21,12 @@ public class BlazorJsBindingsSourceGeneratorTests
 
     [Theory]
     [ClassData(typeof(TestDataProvider))]
-    public async Task Class_Generated(TestCase testCase)
+    public async Task Class_Generated(TestCase @case)
     {
         BlazorJsBindingsSourceGeneratorWrapper wrapper = new()
         {
-            WithSources = testCase.Sources,
-            GeneratedJsBindings = testCase.Generated,
+            WithSources = @case.Sources,
+            GeneratedJsBindings = @case.Generated,
         };
 
         await wrapper.RunAsync();

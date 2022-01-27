@@ -7,6 +7,7 @@ public partial class BlazorJsBindingsSourceGenerator
     private const string JsBindAttribute = "JsBindAttribute";
     private const string Params = "Params";
     private const string Returns = "Returns";
+    private const string ReturnsNullable = "ReturnsNullable";
     private const string ResetContext = "ResetContext";
 
     private const string AttributesToUse = $@"// Auto-generated
@@ -28,6 +29,8 @@ internal class {JsBindAttribute} : Attribute
     public Type? {Params} {{ get; init; }}
 
     public Type {Returns} {{ get; init; }} = typeof(void);
+
+    public Type {ReturnsNullable} {{ get; init; }} = typeof(void);
 
     public bool {ResetContext} {{ get; init; }}
 

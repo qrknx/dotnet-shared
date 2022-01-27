@@ -99,9 +99,20 @@ using Microsoft.JSInterop;
                         : $"\"{signature.JsMember}\"")
             .Append(", token");
 
-        foreach (Param param in signature.Params)
+        if (signature.Params.Count is > 1 or 0)
         {
-            code.Append($", {param.Name}");
+            foreach (Param param in signature.Params)
+            {
+                code.Append($", {param.Name}");
+            }
+        }
+        else
+        {
+            Param param = signature.Params[0];
+
+            code.Append(param is { Type.IsArray: true }
+                            ? $", (object){param.Name}"
+                            : $", {param.Name}");
         }
 
         code.Append(@");

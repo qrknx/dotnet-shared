@@ -31,6 +31,8 @@ internal class JsBindAttribute : Attribute
 
     public Type Returns { get; init; } = typeof(void);
 
+    public Type ReturnsNullable { get; init; } = typeof(void);
+
     public bool ResetContext { get; init; }
 
     public JsBindAttribute(string member) {}

@@ -158,20 +158,21 @@ public partial class BlazorJsBindingsSourceGenerator
 
                                     foreach (TupleElementSyntax element in elements)
                                     {
+                                        // Tuple (int i, int) generates (int i) param list.
                                         if (!element.Identifier.IsKind(SyntaxKind.None))
                                         {
-                                            TypeView type = GetTypeName(element.Type, semantics);
-
-                                            if (!type.IsValid)
+                                            if (TryGetTypeView(element.Type, semantics, out TypeView type))
+                                            {
+                                                signature.Params.Add(new Param
+                                                {
+                                                    Name = element.Identifier.ValueText,
+                                                    Type = type,
+                                                });
+                                            }
+                                            else
                                             {
                                                 return;
                                             }
-
-                                            signature.Params.Add(new Param
-                                            {
-                                                Name = element.Identifier.ValueText,
-                                                Type = type,
-                                            });
                                         }
                                     }
                                     break;
@@ -179,17 +180,25 @@ public partial class BlazorJsBindingsSourceGenerator
                                 case Params:
                                     return;
 
-                                case Returns
-                                    when arg.Expression is TypeOfExpressionSyntax
-                                         {
-                                             Type: var type,
-                                         }
-                                         && GetTypeName(type, semantics) is { IsValid: true } returnType:
-
-                                    signature.ReturnType = returnType;
+                                case Returns when arg.Expression is TypeOfExpressionSyntax
+                                                  {
+                                                      Type: var type,
+                                                  }
+                                                  && TryGetTypeView(type, semantics, out signature.ReturnType):
                                     break;
 
                                 case Returns:
+                                    return;
+
+                                case ReturnsNullable when arg.Expression is TypeOfExpressionSyntax
+                                                          {
+                                                              Type: var type,
+                                                          }
+                                                          && TryGetTypeView(type, semantics, out signature.ReturnType):
+                                    signature.ReturnType.IsNullable = true;
+                                    break;
+
+                                case ReturnsNullable:
                                     return;
 
                                 case ResetContext
@@ -215,7 +224,7 @@ public partial class BlazorJsBindingsSourceGenerator
             }
         }
 
-        private static TypeView GetTypeName(TypeSyntax syntax, SemanticModel semantics)
+        private static bool TryGetTypeView(TypeSyntax syntax, SemanticModel semantics, out TypeView typeView)
         {
             bool isNullable;
 
@@ -235,30 +244,27 @@ public partial class BlazorJsBindingsSourceGenerator
             TypeInfo typeInfo = semantics.GetTypeInfo(internalType);
             ITypeSymbol? type = typeInfo.Type;
 
-            string id;
-            bool isPublic;
-            
             if (type != null)
             {
-                id = string.Join("", type.ToDisplayParts(SymbolDisplayFormat.FullyQualifiedFormat)
-                                         .Select(p => IsAnnotated(p)
-                                                     ? $"{p}?"
-                                                     : p.ToString()));
-                isPublic = type.DeclaredAccessibility == Accessibility.Public;
-            }
-            else
-            {
-                id = "";
-                isPublic = false;
+                bool isArray = internalType is ArrayTypeSyntax;
+
+                typeView = new TypeView
+                {
+                    Id = string.Join("", type.ToDisplayParts(SymbolDisplayFormat.FullyQualifiedFormat)
+                                             .Select(p => IsAnnotated(p)
+                                                         ? $"{p}?"
+                                                         : p.ToString())),
+                    ContainingParentsPath = "",
+                    IsPublic = type.DeclaredAccessibility == Accessibility.Public || isArray,
+                    IsNullable = isNullable,
+                    IsArray = isArray,
+                };
+
+                return true;
             }
 
-            return new()
-            {
-                Id = id,
-                ContainingParentsPath = "",
-                IsNullable = isNullable,
-                IsPublic = isPublic,
-            };
+            typeView = default;
+            return false;
 
             static bool IsAnnotated(in SymbolDisplayPart part) => part.Symbol is ITypeSymbol
             {
@@ -306,8 +312,7 @@ public partial class BlazorJsBindingsSourceGenerator
         public string Id;
         public bool IsNullable;
         public bool IsPublic;
-
-        public bool IsValid => Id != "";
+        public bool IsArray;
 
         public string FullName
         {
