@@ -25,9 +25,9 @@ namespace A
 {
     internal static partial class C
     {
-        public static async Task<global::System.Int32> M1Async(this IJSRuntime js, CancellationToken token)
+        public static async Task<int> M1Async(this IJSRuntime js, CancellationToken token)
         {
-            return await js.InvokeAsync<global::System.Int32>("M1Async", token);
+            return await js.InvokeAsync<int>("M1Async", token);
         }
     }
 }

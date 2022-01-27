@@ -236,28 +236,33 @@ public partial class BlazorJsBindingsSourceGenerator
             ITypeSymbol? type = typeInfo.Type;
 
             string id;
-            string containingParentsPath;
             bool isPublic;
             
             if (type != null)
             {
-                id = $"{type.Name}";
-                containingParentsPath = type.ContainingSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                id = string.Join("", type.ToDisplayParts(SymbolDisplayFormat.FullyQualifiedFormat)
+                                         .Select(p => IsAnnotated(p)
+                                                     ? $"{p}?"
+                                                     : p.ToString()));
                 isPublic = type.DeclaredAccessibility == Accessibility.Public;
             }
             else
             {
                 id = "";
-                containingParentsPath = "";
                 isPublic = false;
             }
 
             return new()
             {
                 Id = id,
-                ContainingParentsPath = containingParentsPath,
+                ContainingParentsPath = "",
                 IsNullable = isNullable,
                 IsPublic = isPublic,
+            };
+
+            static bool IsAnnotated(in SymbolDisplayPart part) => part.Symbol is ITypeSymbol
+            {
+                NullableAnnotation: NullableAnnotation.Annotated,
             };
         }
     }
