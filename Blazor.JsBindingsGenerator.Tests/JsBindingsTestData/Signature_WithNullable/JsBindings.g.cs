@@ -18,5 +18,20 @@ namespace A
         {
             return await js.InvokeAsync<object?>("M2Async", token);
         }
+
+        public static async Task<object?[]> M3Async(this IJSRuntime js, CancellationToken token)
+        {
+            return await js.InvokeAsync<object?[]>("M3Async", token);
+        }
+
+        public static async Task<global::System.Collections.IList?[]> M4Async(this IJSRuntime js, CancellationToken token)
+        {
+            return await js.InvokeAsync<global::System.Collections.IList?[]>("M4Async", token);
+        }
+
+        public static async Task<global::A.CustomStruct?[]> M5Async(this IJSRuntime js, CancellationToken token)
+        {
+            return await js.InvokeAsync<global::A.CustomStruct?[]>("M5Async", token);
+        }
     }
 }

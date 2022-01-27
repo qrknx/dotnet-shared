@@ -19,9 +19,9 @@ namespace A
             return await js.InvokeAsync<int>("M2Async", token, ls);
         }
 
-        public static async Task M3Async(this IJSRuntime js, global::System.Collections.Generic.List<object?> ls, CancellationToken token)
+        public static async Task M3Async(this IJSRuntime js, global::System.Collections.Generic.List<object?> ls, (object? o, object o1, int? i, int i1, global::System.Collections.Generic.List<object?> ls, global::System.Collections.IList ls1) ts, CancellationToken token)
         {
-            await js.InvokeVoidAsync("M3Async", token, ls);
+            await js.InvokeVoidAsync("M3Async", token, ls, ts);
         }
 
         public static async Task M4Async(this IJSRuntime js, global::System.Collections.Generic.List<global::System.Collections.Generic.KeyValuePair<global::A.CustomStruct?, string?>?> kvs, CancellationToken token)
