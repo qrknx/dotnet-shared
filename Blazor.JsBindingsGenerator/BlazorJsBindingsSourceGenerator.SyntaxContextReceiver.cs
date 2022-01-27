@@ -1,4 +1,6 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.Collections.Immutable;
+using System.Runtime.CompilerServices;
+using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -232,37 +234,52 @@ public partial class BlazorJsBindingsSourceGenerator
         {
             bool isNullable;
 
-            TypeSyntax internalType;
+            TypeSyntax nonNullableType;
 
             if (syntax is NullableTypeSyntax nts)
             {
                 isNullable = true;
-                internalType = nts.ElementType;
+                nonNullableType = nts.ElementType;
             }
             else
             {
                 isNullable = false;
-                internalType = syntax;
+                nonNullableType = syntax;
             }
 
-            TypeInfo typeInfo = semantics.GetTypeInfo(internalType);
+            TypeInfo typeInfo = semantics.GetTypeInfo(nonNullableType);
             ITypeSymbol? type = typeInfo.Type;
 
             if (type != null)
             {
-                bool isArray = internalType is ArrayTypeSyntax;
+                bool isArray = nonNullableType is ArrayTypeSyntax;
+                bool isPublic = true;
+                ImmutableArray<SymbolDisplayPart> parts = type.ToDisplayParts(SymbolDisplayFormat.FullyQualifiedFormat);
+                StringBuilder sb = new(capacity: parts.Sum(p => p.ToString().Length) + parts.Length);
+
+                foreach (SymbolDisplayPart part in parts)
+                {
+                    isPublic &= part.Symbol is not ITypeSymbol or ITypeSymbol
+                    {
+                        DeclaredAccessibility: Accessibility.Public,
+                    };
+
+                    sb.Append(part.ToString());
+
+                    if (IsAnnotated(part))
+                    {
+                        sb.Append('?');
+                    }
+                }
 
                 typeView = new TypeView
                 {
-                    FullId = string.Join("", type.ToDisplayParts(SymbolDisplayFormat.FullyQualifiedFormat)
-                                             .Select(p => IsAnnotated(p)
-                                                         ? $"{p}?"
-                                                         : p.ToString())),
+                    FullId = sb.ToString(),
                     // Not implemented.
                     ShortId = "",
                     // Not implemented.
                     ContainingParentsPath = "",
-                    IsPublic = type.DeclaredAccessibility == Accessibility.Public || isArray,
+                    IsPublic = isPublic,
                     IsNullable = isNullable,
                     IsArray = isArray,
                 };

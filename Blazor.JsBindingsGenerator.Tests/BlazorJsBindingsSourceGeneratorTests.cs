@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text.Json;
 using System.Threading.Tasks;
 using JsBindingsGenerator;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Blazor.JsBindingsGenerator.Tests;
 
@@ -71,8 +73,23 @@ public class BlazorJsBindingsSourceGeneratorTests
         }
     }
 
-    public readonly record struct TestCase(string Name, IEnumerable<string> Sources, string Generated)
+    public record struct TestCase(string Name, IEnumerable<string> Sources, string Generated)
+        : IXunitSerializable
     {
+        public void Deserialize(IXunitSerializationInfo info)
+        {
+            Name = info.GetValue<string>(nameof(Name));
+            Sources = JsonSerializer.Deserialize<List<string>>(info.GetValue<string>(nameof(Sources)))!;
+            Generated = info.GetValue<string>(nameof(Generated));
+        }
+
+        public void Serialize(IXunitSerializationInfo info)
+        {
+            info.AddValue(nameof(Name), Name);
+            info.AddValue(nameof(Sources), JsonSerializer.Serialize(Sources));
+            info.AddValue(nameof(Generated), Generated);
+        }
+
         public override string ToString() => Name.TrimEnd('.');
     }
 }

@@ -1,11 +1,16 @@
-﻿using JsBindingsGenerator;
+﻿using System.Collections.Generic;
+using JsBindingsGenerator;
 
 namespace A;
 
-internal struct CustomStruct {}
+internal struct CustomClass {}
 
-[JsBind("M1Async", Params = typeof((CustomStruct s, int)))]
-[JsBind("M2Async", Returns = typeof(CustomStruct))]
+[JsBind("M1Async", Params = typeof((CustomClass c, int)))]
+[JsBind("M2Async", Returns = typeof(CustomClass))]
+[JsBind("M3Async", Returns = typeof(CustomClass?[]))]
+[JsBind("M4Async", Returns = typeof(CustomClass?))]
+[JsBind("M5Async", Returns = typeof(List<CustomClass?>))]
+[JsBind("M6Async", Returns = typeof((CustomClass?, int)))]
 public static partial class B {}
 
 [JsBind("M1Async", Returns = typeof(int))]
