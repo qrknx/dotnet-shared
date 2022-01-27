@@ -131,6 +131,7 @@ public partial class BlazorJsBindingsSourceGenerator
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static Signature? TryParseSignature(AttributeSyntax attribute, SemanticModel semantics)
         {
             if (attribute.ArgumentList is { Arguments: { Count: >= 1 } args }
@@ -148,86 +149,95 @@ public partial class BlazorJsBindingsSourceGenerator
 
                 for (int i = 1; i < args.Count; ++i)
                 {
-                    AttributeArgumentSyntax arg = args[i];
-
-                    switch (arg.NameEquals?.Name.Identifier.ValueText)
+                    if (!TryParseNamedArgument(args[i], ref signature, semantics))
                     {
-                        case Params when arg.Expression is TypeOfExpressionSyntax
-                        {
-                            Type: TupleTypeSyntax
-                            {
-                                Elements: var elements,
-                            },
-                        }:
-                            signature.Params = new List<Param>(capacity: elements.Count);
-
-                            foreach (TupleElementSyntax element in elements)
-                            {
-                                // Tuple (int i, int) generates (int i) param list.
-                                if (!element.Identifier.IsKind(SyntaxKind.None))
-                                {
-                                    if (TryGetTypeView(element.Type, semantics, out TypeView type))
-                                    {
-                                        signature.Params.Add(new Param
-                                        {
-                                            Name = element.Identifier.ValueText,
-                                            Type = type,
-                                        });
-                                    }
-                                    else
-                                    {
-                                        return null;
-                                    }
-                                }
-                            }
-                            break;
-
-                        case Params:
-                            return null;
-
-                        case Returns when arg.Expression is TypeOfExpressionSyntax
-                                          {
-                                              Type: var type,
-                                          }
-                                          && TryGetTypeView(type, semantics, out signature.ReturnType):
-                            break;
-
-                        case Returns:
-                            return null;
-
-                        case ReturnsNullable when arg.Expression is TypeOfExpressionSyntax
-                                                  {
-                                                      Type: var type,
-                                                  }
-                                                  && TryGetTypeView(type, semantics, out signature.ReturnType):
-                            signature.ReturnType.IsNullable = true;
-                            break;
-
-                        case ReturnsNullable:
-                            return null;
-
-                        case ResetContext when semantics.GetConstantValue(arg.Expression) is
-                        {
-                            HasValue: true,
-                            Value: bool resetContext,
-                        }:
-                            signature.ResetJsContext = resetContext;
-                            break;
-
-                        case ResetContext:
-                            return null;
+                        return null;
                     }
                 }
 
-                if (signature.Params == null)
-                {
-                    signature.Params = new List<Param>(capacity: 0);
-                }
+                signature.Params ??= new List<Param>(capacity: 0);
 
                 return signature;
             }
 
             return null;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool TryParseNamedArgument(AttributeArgumentSyntax arg,
+                                                  ref Signature signature,
+                                                  SemanticModel semantics)
+        {
+            switch (arg.NameEquals?.Name.Identifier.ValueText)
+            {
+                case Params when arg.Expression is TypeOfExpressionSyntax
+                {
+                    Type: TupleTypeSyntax
+                    {
+                        Elements: var elements,
+                    },
+                }:
+                    signature.Params = new List<Param>(capacity: elements.Count);
+
+                    foreach (TupleElementSyntax element in elements)
+                    {
+                        // Tuple (int i, int) generates (int i) param list.
+                        if (!element.Identifier.IsKind(SyntaxKind.None))
+                        {
+                            if (TryGetTypeView(element.Type, semantics, out TypeView type))
+                            {
+                                signature.Params.Add(new Param
+                                {
+                                    Name = element.Identifier.ValueText,
+                                    Type = type,
+                                });
+                            }
+                            else
+                            {
+                                return false;
+                            }
+                        }
+                    }
+
+                    return true;
+
+                case Params:
+                    return false;
+
+                case Returns when arg.Expression is TypeOfExpressionSyntax
+                                  {
+                                      Type: var type,
+                                  }
+                                  && TryGetTypeView(type, semantics, out signature.ReturnType):
+                    return true;
+
+                case Returns:
+                    return false;
+
+                case ReturnsNullable when arg.Expression is TypeOfExpressionSyntax
+                                          {
+                                              Type: var type,
+                                          }
+                                          && TryGetTypeView(type, semantics, out signature.ReturnType):
+                    signature.ReturnType.IsNullable = true;
+                    return true;
+
+                case ReturnsNullable:
+                    return false;
+
+                case ResetContext when semantics.GetConstantValue(arg.Expression) is
+                {
+                    HasValue: true,
+                    Value: bool resetContext,
+                }:
+                    signature.ResetJsContext = resetContext;
+                    return true;
+
+                case ResetContext:
+                    return false;
+            }
+
+            return true;
         }
 
         private static bool TryGetTypeView(TypeSyntax syntax, SemanticModel semantics, out TypeView typeView)
