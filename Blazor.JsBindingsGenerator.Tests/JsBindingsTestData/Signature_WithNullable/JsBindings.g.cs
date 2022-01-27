@@ -13,5 +13,10 @@ namespace A
         {
             return await js.InvokeAsync<int?>("M1Async", token, i, s, t, cs);
         }
+
+        public static async Task<object?> M2Async(this IJSRuntime js, CancellationToken token)
+        {
+            return await js.InvokeAsync<object?>("M2Async", token);
+        }
     }
 }

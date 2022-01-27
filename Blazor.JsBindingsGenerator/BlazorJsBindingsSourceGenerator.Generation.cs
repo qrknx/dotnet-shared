@@ -30,9 +30,9 @@ using Microsoft.JSInterop;
 {{
 ");
 
-        string access = classForGeneration.IsPublic ? "public" : "internal";
+        string access = classForGeneration.Type.IsPublic ? "public" : "internal";
 
-        code.Append($@"    {access} static partial class {classForGeneration.Type.Id}
+        code.Append($@"    {access} static partial class {classForGeneration.Type.ShortId}
     {{");
 
         foreach (Signature signature in classForGeneration.Signatures)
@@ -54,12 +54,12 @@ using Microsoft.JSInterop;
     {
         bool hasResult = !signature.ReturnType.Equals(TypeView.Void);
 
-        string returnType;
         string fullName;
+        string returnType;
 
         if (hasResult)
         {
-            fullName = signature.ReturnType.FullName;
+            fullName = signature.ReturnType.AnnotatedFullId;
             returnType = $"Task<{fullName}>";
         }
         else
@@ -78,7 +78,7 @@ using Microsoft.JSInterop;
 
         foreach (Param param in signature.Params)
         {
-            code.Append($", {param.Type.FullName} {param.Name}");
+            code.Append($", {param.Type.AnnotatedFullId} {param.Name}");
         }
 
         code.Append(@", CancellationToken token)
@@ -99,7 +99,7 @@ using Microsoft.JSInterop;
                         : $"\"{signature.JsMember}\"")
             .Append(", token");
 
-        if (signature.Params.Count is > 1 or 0)
+        if (signature.Params.Count is 0 or > 1)
         {
             foreach (Param param in signature.Params)
             {

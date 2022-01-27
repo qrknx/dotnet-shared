@@ -21,7 +21,7 @@ public class BlazorJsBindingsSourceGeneratorTests
 
     [Theory]
     [ClassData(typeof(TestDataProvider))]
-    public async Task Class_Generated(TestCase @case)
+    public async Task Bindings_Generated(TestCase @case)
     {
         BlazorJsBindingsSourceGeneratorWrapper wrapper = new()
         {

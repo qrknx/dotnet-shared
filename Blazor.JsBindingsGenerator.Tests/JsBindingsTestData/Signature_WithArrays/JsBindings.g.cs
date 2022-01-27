@@ -14,19 +14,19 @@ namespace A
             return await js.InvokeAsync<byte[]>("M1Async", token);
         }
 
-        public static async Task<object?[]?> M2Async(this IJSRuntime js, CancellationToken token)
+        public static async Task<object?[]> M2Async(this IJSRuntime js, CancellationToken token)
         {
-            return await js.InvokeAsync<object?[]?>("M2Async", token);
+            return await js.InvokeAsync<object?[]>("M2Async", token);
         }
 
-        public static async Task<global::System.Collections.IList?[]?> M3Async(this IJSRuntime js, CancellationToken token)
+        public static async Task<global::System.Collections.IList?[]> M3Async(this IJSRuntime js, CancellationToken token)
         {
-            return await js.InvokeAsync<global::System.Collections.IList?[]?>("M3Async", token);
+            return await js.InvokeAsync<global::System.Collections.IList?[]>("M3Async", token);
         }
 
-        public static async Task<global::A.CustomStruct?[]?> M4Async(this IJSRuntime js, CancellationToken token)
+        public static async Task<global::A.CustomStruct?[]> M4Async(this IJSRuntime js, CancellationToken token)
         {
-            return await js.InvokeAsync<global::A.CustomStruct?[]?>("M4Async", token);
+            return await js.InvokeAsync<global::A.CustomStruct?[]>("M4Async", token);
         }
 
         public static async Task M5Async(this IJSRuntime js, object[] os, CancellationToken token)

@@ -15,17 +15,9 @@ public partial class BlazorJsBindingsSourceGenerator
         {
             if (IsClassForGeneration(context,
                                      out SyntaxList<AttributeListSyntax> attributeLists,
-                                     out TypeView type,
-                                     out bool isPublic))
+                                     out ClassForGeneration classForGeneration))
             {
                 SemanticModel semantics = context.SemanticModel;
-
-                ClassForGeneration classForGeneration = new()
-                {
-                    Type = type,
-                    IsPublic = isPublic,
-                    Signatures = new(capacity: attributeLists.Sum(list => list.Attributes.Count)),
-                };
 
                 foreach (AttributeListSyntax attributeList in attributeLists)
                 {
@@ -45,54 +37,48 @@ public partial class BlazorJsBindingsSourceGenerator
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool IsClassForGeneration(GeneratorSyntaxContext context,
                                                  out SyntaxList<AttributeListSyntax> attributeLists,
-                                                 out TypeView type,
-                                                 out bool isPublic)
+                                                 out ClassForGeneration classForGeneration)
         {
             if (context.Node is ClassDeclarationSyntax
                 {
                     Parent: BaseNamespaceDeclarationSyntax parent,
+                    TypeParameterList: null,
+                    Identifier.Value: string identifier,
                     Modifiers: var modifiers,
                 } cds
                 && modifiers.Any(m => m.IsKind(SyntaxKind.PartialKeyword))
                 && modifiers.Any(m => m.IsKind(SyntaxKind.StaticKeyword)))
             {
-                if (cds.Identifier.Value is string identifier)
+                attributeLists = cds.AttributeLists;
+
+                Stack<string> nodes = new();
+
+                nodes.Push(identifier);
+
+                BaseNamespaceDeclarationSyntax? current = parent;
+
+                do
                 {
-                    attributeLists = cds.AttributeLists;
+                    nodes.Push(current.Name.ToString());
+                    current = current.Parent as BaseNamespaceDeclarationSyntax;
+                } while (current != null);
 
-                    string containingNodePath;
-
-                    if (parent.Parent is not BaseNamespaceDeclarationSyntax)
+                classForGeneration = new ClassForGeneration
+                {
+                    Type = new TypeView
                     {
-                        containingNodePath = parent.Name.ToString();
-                    }
-                    else
-                    {
-                        Stack<string> nodes = new();
-                        BaseNamespaceDeclarationSyntax? current = parent;
+                        FullId = string.Join('.', nodes),
+                        ShortId = identifier,
+                        ContainingParentsPath = string.Join('.', nodes.SkipLast(1)),
+                        IsPublic = modifiers.Any(m => m.IsKind(SyntaxKind.PublicKeyword)),
+                    },
+                    Signatures = new List<Signature>(capacity: attributeLists.Sum(list => list.Attributes.Count)),
+                };
 
-                        do
-                        {
-                            nodes.Push(current.Name.ToString());
-                            current = current.Parent as BaseNamespaceDeclarationSyntax;
-                        } while (current != null);
-
-                        containingNodePath = string.Join('.', nodes);
-                    }
-
-                    type = new TypeView
-                    {
-                        Id = identifier,
-                        ContainingParentsPath = containingNodePath,
-                    };
-
-                    isPublic = modifiers.Any(m => m.IsKind(SyntaxKind.PublicKeyword));
-                    
-                    return true;
-                }
+                return true;
             }
 
-            (attributeLists, type, isPublic) = (default, default, default);
+            (attributeLists, classForGeneration) = (default, default);
 
             return false;
         }
@@ -250,10 +236,13 @@ public partial class BlazorJsBindingsSourceGenerator
 
                 typeView = new TypeView
                 {
-                    Id = string.Join("", type.ToDisplayParts(SymbolDisplayFormat.FullyQualifiedFormat)
+                    FullId = string.Join("", type.ToDisplayParts(SymbolDisplayFormat.FullyQualifiedFormat)
                                              .Select(p => IsAnnotated(p)
                                                          ? $"{p}?"
                                                          : p.ToString())),
+                    // Not implemented.
+                    ShortId = "",
+                    // Not implemented.
                     ContainingParentsPath = "",
                     IsPublic = type.DeclaredAccessibility == Accessibility.Public || isArray,
                     IsNullable = isNullable,
@@ -278,7 +267,6 @@ public partial class BlazorJsBindingsSourceGenerator
     private struct ClassForGeneration
     {
         public TypeView Type;
-        public bool IsPublic;
         public List<Signature> Signatures;
         public string JsContext = "";
     }
@@ -303,39 +291,28 @@ public partial class BlazorJsBindingsSourceGenerator
     {
         public static readonly TypeView Void = new()
         {
-            ContainingParentsPath = "",
-            Id = "void",
+            FullId = "void",
             IsPublic = true,
         };
 
+        public string FullId;
+        public string ShortId;
         public string ContainingParentsPath;
-        public string Id;
         public bool IsNullable;
         public bool IsPublic;
         public bool IsArray;
 
-        public string FullName
-        {
-            get
-            {
-                string nullability = IsNullable ? "?" : "";
+        public string AnnotatedFullId => $"{FullId}{(IsNullable ? "?" : "")}";
 
-                return ContainingParentsPath != ""
-                    ? $"{ContainingParentsPath}.{Id}{nullability}"
-                    : $"{Id}{nullability}";
-            }
-        }
-
-        public bool Equals(TypeView other) => ContainingParentsPath == other.ContainingParentsPath
-                                              && Id == other.Id
+        public bool Equals(TypeView other) => FullId == other.FullId
                                               && IsNullable == other.IsNullable
                                               && IsPublic == other.IsPublic;
 
         public override bool Equals(object? obj) => obj is TypeView other && Equals(other);
 
-        public override int GetHashCode() => HashCode.Combine(ContainingParentsPath, Id, IsNullable, IsPublic);
+        public override int GetHashCode() => HashCode.Combine(FullId, IsNullable, IsPublic);
 
-        public override string ToString() => FullName;
+        public override string ToString() => AnnotatedFullId;
     }
 
 #pragma warning restore
