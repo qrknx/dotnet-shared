@@ -13,74 +13,83 @@ public partial class BlazorJsBindingsSourceGenerator
 
         public void OnVisitSyntaxNode(GeneratorSyntaxContext context)
         {
-            if (IsClassForGeneration(context,
-                                     out SyntaxList<AttributeListSyntax> attributeLists,
-                                     out ClassForGeneration classForGeneration))
+            if (TryGetClassForGeneration(context) is {} classForGeneration)
             {
-                SemanticModel semantics = context.SemanticModel;
-
-                foreach (AttributeListSyntax attributeList in attributeLists)
-                {
-                    foreach (AttributeSyntax attribute in attributeList.Attributes)
-                    {
-                        ExtractGenerationInfo(attribute, ref classForGeneration, semantics);
-                    }
-                }
-
-                if (classForGeneration.Signatures.Any())
-                {
-                    ClassesForGeneration.Add(classForGeneration);
-                }
+                ClassesForGeneration.Add(classForGeneration);
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool IsClassForGeneration(GeneratorSyntaxContext context,
-                                                 out SyntaxList<AttributeListSyntax> attributeLists,
-                                                 out ClassForGeneration classForGeneration)
+        private static ClassForGeneration? TryGetClassForGeneration(GeneratorSyntaxContext context)
         {
-            if (context.Node is ClassDeclarationSyntax
+            if (context.Node is not ClassDeclarationSyntax
                 {
-                    Parent: BaseNamespaceDeclarationSyntax parent,
+                    Parent: BaseNamespaceDeclarationSyntax parentSyntax,
                     TypeParameterList: null,
                     Identifier.Value: string identifier,
+                    AttributeLists: var attributeLists,
                     Modifiers: var modifiers,
-                } cds
-                && modifiers.Any(m => m.IsKind(SyntaxKind.PartialKeyword))
-                && modifiers.Any(m => m.IsKind(SyntaxKind.StaticKeyword)))
+                }
+                || !modifiers.Any(m => m.IsKind(SyntaxKind.PartialKeyword))
+                || !modifiers.Any(m => m.IsKind(SyntaxKind.StaticKeyword)))
             {
-                attributeLists = cds.AttributeLists;
-
-                Stack<string> nodes = new();
-
-                nodes.Push(identifier);
-
-                BaseNamespaceDeclarationSyntax? current = parent;
-
-                do
-                {
-                    nodes.Push(current.Name.ToString());
-                    current = current.Parent as BaseNamespaceDeclarationSyntax;
-                } while (current != null);
-
-                classForGeneration = new ClassForGeneration
-                {
-                    Type = new TypeView
-                    {
-                        FullId = string.Join('.', nodes),
-                        ShortId = identifier,
-                        ContainingParentsPath = string.Join('.', nodes.SkipLast(1)),
-                        IsPublic = modifiers.Any(m => m.IsKind(SyntaxKind.PublicKeyword)),
-                    },
-                    Signatures = new List<Signature>(capacity: attributeLists.Sum(list => list.Attributes.Count)),
-                };
-
-                return true;
+                return null;
             }
 
-            (attributeLists, classForGeneration) = (default, default);
+            ClassForGeneration classForGeneration = InitializeClassForGeneration(identifier,
+                                                                                 modifiers,
+                                                                                 attributeLists,
+                                                                                 parentSyntax);
 
-            return false;
+            ExtractGenerationInfo(attributeLists, ref classForGeneration, context.SemanticModel);
+
+            return classForGeneration.Signatures.Any()
+                ? classForGeneration
+                : null;
+        }
+
+        private static ClassForGeneration InitializeClassForGeneration(string identifier,
+                                                                       SyntaxTokenList modifiers,
+                                                                       SyntaxList<AttributeListSyntax> attributeLists,
+                                                                       BaseNamespaceDeclarationSyntax parentSyntax)
+        {
+            Stack<string> fullIdParts = new();
+
+            fullIdParts.Push(identifier);
+
+            BaseNamespaceDeclarationSyntax? currentParentSyntax = parentSyntax;
+
+            do
+            {
+                fullIdParts.Push(currentParentSyntax.Name.ToString());
+                currentParentSyntax = currentParentSyntax.Parent as BaseNamespaceDeclarationSyntax;
+            } while (currentParentSyntax != null);
+
+            return new ClassForGeneration
+            {
+                Type = new TypeView
+                {
+                    FullId = string.Join('.', fullIdParts),
+                    ShortId = identifier,
+                    ContainingParentsPath = string.Join('.', fullIdParts.SkipLast(1)),
+                    IsPublic = modifiers.Any(m => m.IsKind(SyntaxKind.PublicKeyword)),
+                },
+                Signatures = new List<Signature>(capacity: attributeLists.Sum(list => list.Attributes.Count)),
+            };
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void ExtractGenerationInfo(SyntaxList<AttributeListSyntax> attributeLists,
+                                                  ref ClassForGeneration classForGeneration,
+                                                  SemanticModel semantics)
+        {
+            foreach (AttributeListSyntax attributeList in attributeLists)
+            {
+                foreach (AttributeSyntax attribute in attributeList.Attributes)
+                {
+                    ExtractGenerationInfo(attribute, ref classForGeneration, semantics);
+                }
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
