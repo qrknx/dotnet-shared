@@ -217,11 +217,23 @@ public partial class BlazorJsBindingsSourceGenerator
 
         private static TypeView GetTypeName(TypeSyntax syntax, SemanticModel semantics)
         {
-            TypeInfo typeInfo = semantics.GetTypeInfo(syntax);
-            ITypeSymbol? type = typeInfo.Type;
+            bool isNullable;
 
-            // todo
-            bool isNullable = syntax is NullableTypeSyntax;
+            TypeSyntax internalType;
+
+            if (syntax is NullableTypeSyntax nts)
+            {
+                isNullable = true;
+                internalType = nts.ElementType;
+            }
+            else
+            {
+                isNullable = false;
+                internalType = syntax;
+            }
+
+            TypeInfo typeInfo = semantics.GetTypeInfo(internalType);
+            ITypeSymbol? type = typeInfo.Type;
 
             string id;
             string containingParentsPath;

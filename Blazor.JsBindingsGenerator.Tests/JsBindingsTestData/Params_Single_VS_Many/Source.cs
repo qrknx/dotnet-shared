@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using JsBindingsGenerator;
+﻿using JsBindingsGenerator;
 
 namespace A;
 
