@@ -18,8 +18,8 @@ jobs:
       with:
         dotnet-version: 6.0.x
     - name: Restore dependencies
-      run: dotnet restore
+      run: dotnet restore DotNet.Shared.sln
     - name: Build
-      run: dotnet build --no-restore
+      run: dotnet build --no-restore DotNet.Shared.sln
     - name: Test
-      run: dotnet test --no-build --verbosity normal
+      run: dotnet test --no-build --verbosity normal DotNet.Shared.sln
