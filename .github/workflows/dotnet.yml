@@ -25,4 +25,4 @@ jobs:
       run: dotnet test --configuration Release --no-build --verbosity normal DotNet.Shared.sln
     - name: Publish
       run: |
-        dotnet nuget push Blazor.JsBindingsGenerator/bin/Release/Blazor.JsBindingsGenerator.$package_version.nupkg --source https://nuget.pkg.github.com/qrknx/index.json --api-key $PACKAGES_TOKEN
+        dotnet nuget push Blazor.JsBindingsGenerator/bin/Release/Blazor.JsBindingsGenerator.$package_version.nupkg --source https://nuget.pkg.github.com/qrknx/index.json --api-key ${{ secrets.PACKAGES_TOKEN }}
