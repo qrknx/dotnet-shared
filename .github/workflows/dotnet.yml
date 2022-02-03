@@ -3,8 +3,6 @@ name: .NET CI
 on:
   push:
     branches: [ master ]
-  pull_request:
-    branches: [ master ]
 
 jobs:
   build:
@@ -20,6 +18,9 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore DotNet.Shared.sln
     - name: Build
-      run: dotnet build --no-restore DotNet.Shared.sln
+      run: dotnet build --configuration Release --no-restore p:Version=0.9.$GITHUB_RUN_NUMBER DotNet.Shared.sln
     - name: Test
-      run: dotnet test --no-build --verbosity normal DotNet.Shared.sln
+      run: dotnet test --configuration Release --no-build --verbosity normal DotNet.Shared.sln
+    - name: Pack
+      run: |
+        dotnet nuget add source --username USERNAME --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/OWNER/index.json"
