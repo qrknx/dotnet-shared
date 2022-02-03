@@ -5,13 +5,17 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <!-- Do not include the generator as a lib dependency -->
     <IncludeBuildOutput>false</IncludeBuildOutput>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="$(Configuration) == 'Release'">
 <!--
+https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/compiler-options/errors-warnings
+Also might help:
 https://stackoverflow.com/a/67203992
 https://github.com/dotnet/docs/issues/27661
-https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/compiler-options/errors-warnings
-WarningsNotAsErrors and DisabledWarnings doesn't help
-<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 -->
+    <NoWarn>$(NoWarn);NU5128</NoWarn>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <ItemGroup>
