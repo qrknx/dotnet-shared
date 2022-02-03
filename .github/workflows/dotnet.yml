@@ -5,7 +5,7 @@ on:
     branches: [ master ]
 
 jobs:
-  build:
+  publish:
 
     runs-on: ubuntu-latest
 
@@ -15,12 +15,14 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 6.0.x
+    - name: Define version
+      run: echo "package_version=0.9.$GITHUB_RUN_NUMBER" >> $GITHUB_ENV
     - name: Restore dependencies
       run: dotnet restore DotNet.Shared.sln
     - name: Build
-      run: dotnet build --configuration Release --no-restore /p:Version=0.9.$GITHUB_RUN_NUMBER DotNet.Shared.sln
+      run: dotnet build --configuration Release --no-restore /p:Version=$package_version DotNet.Shared.sln
     - name: Test
       run: dotnet test --configuration Release --no-build --verbosity normal DotNet.Shared.sln
-    - name: Pack
+    - name: Publish
       run: |
-        dotnet nuget push Blazor.JsBindingsGenerator/bin/Release/Blazor.JsBindingsGenerator.0.9.$GITHUB_RUN_NUMBER.nupkg --source https://nuget.pkg.github.com/qrknx/index.json --api-key $PACKAGES_TOKEN
+        dotnet nuget push Blazor.JsBindingsGenerator/bin/Release/Blazor.JsBindingsGenerator.$package_version.nupkg --source https://nuget.pkg.github.com/qrknx/index.json --api-key $PACKAGES_TOKEN
