@@ -15,7 +15,7 @@ public partial class BlazorJsBindingsSourceGenerator
 
         public void OnVisitSyntaxNode(GeneratorSyntaxContext context)
         {
-            if (TryGetClassForGeneration(context) is {} classForGeneration)
+            if (TryGetClassForGeneration(context) is {Signatures.Count: > 0} classForGeneration)
             {
                 ClassesForGeneration.Add(classForGeneration);
             }
@@ -24,30 +24,27 @@ public partial class BlazorJsBindingsSourceGenerator
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static ClassForGeneration? TryGetClassForGeneration(GeneratorSyntaxContext context)
         {
-            if (context.Node is not ClassDeclarationSyntax
+            if (context.Node is ClassDeclarationSyntax
                 {
                     Parent: BaseNamespaceDeclarationSyntax parentSyntax,
                     TypeParameterList: null,
                     Identifier.Value: string identifier,
                     AttributeLists: var attributeLists,
                     Modifiers: var modifiers,
-                }
-                || !modifiers.Any(m => m.IsKind(SyntaxKind.PartialKeyword))
-                || !modifiers.Any(m => m.IsKind(SyntaxKind.StaticKeyword)))
+                } && modifiers.Any(m => m.IsKind(SyntaxKind.PartialKeyword))
+                  && modifiers.Any(m => m.IsKind(SyntaxKind.StaticKeyword)))
             {
-                return null;
+                ClassForGeneration classForGeneration = InitializeClassForGeneration(identifier,
+                                                                                     modifiers,
+                                                                                     attributeLists,
+                                                                                     parentSyntax);
+
+                ExtractGenerationInfo(attributeLists, ref classForGeneration, context.SemanticModel);
+
+                return classForGeneration;
             }
 
-            ClassForGeneration classForGeneration = InitializeClassForGeneration(identifier,
-                                                                                 modifiers,
-                                                                                 attributeLists,
-                                                                                 parentSyntax);
-
-            ExtractGenerationInfo(attributeLists, ref classForGeneration, context.SemanticModel);
-
-            return classForGeneration.Signatures.Any()
-                ? classForGeneration
-                : null;
+            return null;
         }
 
         private static ClassForGeneration InitializeClassForGeneration(string identifier,
@@ -109,11 +106,7 @@ public partial class BlazorJsBindingsSourceGenerator
                 {
                     case JsBindingContextAttribute
                         when attribute.ArgumentList is { Arguments: { Count: 1 } args }
-                             && semantics.GetConstantValue(args[0].Expression) is
-                             {
-                                 HasValue: true,
-                                 Value: string value,
-                             }:
+                             && semantics.TryGetConstValue(args[0].Expression, out string? value):
 
                         classForGeneration.JsContext = value;
                         break;
@@ -121,7 +114,7 @@ public partial class BlazorJsBindingsSourceGenerator
                     case JsBindingContextAttribute:
                         return;
 
-                    case JsBindAttribute when TryParseSignature(attribute, semantics) is { } signature:
+                    case JsBindAttribute when TryParseSignature(attribute, semantics) is {} signature:
                         classForGeneration.Signatures.Add(signature);
                         break;
 
@@ -135,11 +128,7 @@ public partial class BlazorJsBindingsSourceGenerator
         private static Signature? TryParseSignature(AttributeSyntax attribute, SemanticModel semantics)
         {
             if (attribute.ArgumentList is { Arguments: { Count: >= 1 } args }
-                && semantics.GetConstantValue(args[0].Expression) is
-                {
-                    HasValue: true,
-                    Value: string jsMember,
-                })
+                && semantics.TryGetConstValue(args[0].Expression, out string? jsMember))
             {
                 Signature signature = new()
                 {
@@ -204,32 +193,20 @@ public partial class BlazorJsBindingsSourceGenerator
                 case Params:
                     return false;
 
-                case Returns when arg.Expression is TypeOfExpressionSyntax
-                                  {
-                                      Type: var type,
-                                  }
-                                  && TryGetTypeView(type, semantics, out signature.ReturnType):
+                case Returns when TryGetReturnType(arg, semantics, ref signature):
                     return true;
 
                 case Returns:
                     return false;
 
-                case ReturnsNullable when arg.Expression is TypeOfExpressionSyntax
-                                          {
-                                              Type: var type,
-                                          }
-                                          && TryGetTypeView(type, semantics, out signature.ReturnType):
+                case ReturnsNullable when TryGetReturnType(arg, semantics, ref signature):
                     signature.ReturnType.IsNullable = true;
                     return true;
 
                 case ReturnsNullable:
                     return false;
 
-                case ResetContext when semantics.GetConstantValue(arg.Expression) is
-                {
-                    HasValue: true,
-                    Value: bool resetContext,
-                }:
+                case ResetContext when semantics.TryGetConstValue(arg.Expression, out bool resetContext):
                     signature.ResetJsContext = resetContext;
                     return true;
 
@@ -240,16 +217,24 @@ public partial class BlazorJsBindingsSourceGenerator
             return true;
         }
 
+        private static bool TryGetReturnType(AttributeArgumentSyntax syntax,
+                                             SemanticModel semantics,
+                                             ref Signature signature)
+        {
+            return syntax.Expression is TypeOfExpressionSyntax
+                   {
+                       Type: var type,
+                   }
+                   && TryGetTypeView(type, semantics, out signature.ReturnType);
+        }
+
         private static bool TryGetTypeView(TypeSyntax syntax, SemanticModel semantics, out TypeView typeView)
         {
             bool isNullable;
 
-            TypeSyntax nonNullableType;
-
-            if (syntax is NullableTypeSyntax nts)
+            if (syntax is NullableTypeSyntax {ElementType: var nonNullableType })
             {
                 isNullable = true;
-                nonNullableType = nts.ElementType;
             }
             else
             {

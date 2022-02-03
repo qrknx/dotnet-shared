@@ -102,3 +102,4 @@ csharp_indent_braces = false
 # ReSharper properties
 resharper_csharp_empty_block_style = together_same_line
 resharper_wrap_before_eq = true
+resharper_space_between_empty_braces = false
