@@ -120,7 +120,7 @@ using Microsoft.JSInterop;
 ");
     }
 
-    private static string NormalizeId(string jsId)
+    private unsafe static string NormalizeId(string jsId)
     {
         switch (jsId)
         {
@@ -142,17 +142,20 @@ using Microsoft.JSInterop;
             ? char.ToUpper(firstChar)
             : firstChar;
 
-        jsId.AsSpan(start: 1).CopyTo(chars[1..]);
+        jsId.AsSpan(start: 1).CopyTo(chars.Slice(1));
 
         if (!jsId.EndsWith(asyncSuffix, StringComparison.Ordinal))
         {
-            asyncSuffix.CopyTo(chars[^asyncSuffix.Length..]);
+            asyncSuffix.AsSpan().CopyTo(chars.Slice(chars.Length - asyncSuffix.Length));
         }
         else
         {
-            chars = chars[..^asyncSuffix.Length];
+            chars = chars.Slice(0, chars.Length - asyncSuffix.Length);
         }
 
-        return new string(chars);
+        fixed (char* ptr = chars)
+        {
+            return new string(ptr, 0, chars.Length);
+        }
     }
 }

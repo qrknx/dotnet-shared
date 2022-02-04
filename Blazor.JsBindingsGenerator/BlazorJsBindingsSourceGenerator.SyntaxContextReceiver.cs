@@ -1,6 +1,7 @@
 ﻿using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Text;
+using Blazor.JsBindingsGenerator.Compatibility;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -68,9 +69,9 @@ public partial class BlazorJsBindingsSourceGenerator
             {
                 Type = new TypeView
                 {
-                    FullId = string.Join('.', fullIdParts),
+                    FullId = Compatible.StringJoin('.', fullIdParts),
                     ShortId = identifier,
-                    ContainingParentsPath = string.Join('.', fullIdParts.SkipLast(1)),
+                    ContainingParentsPath = Compatible.StringJoin('.', fullIdParts.SkipLast(1)),
                     IsPublic = modifiers.Any(m => m.IsKind(SyntaxKind.PublicKeyword)),
                 },
                 Signatures = new List<Signature>(capacity: attributeLists.Sum(list => list.Attributes.Count)),
@@ -340,7 +341,13 @@ public partial class BlazorJsBindingsSourceGenerator
 
         public override bool Equals(object? obj) => obj is TypeView other && Equals(other);
 
-        public override int GetHashCode() => HashCode.Combine(FullId, IsNullable, IsPublic);
+        public override int GetHashCode()
+        {
+            throw new NotImplementedException();
+            // Now this method is not required.
+            // In .NET 6:
+            // return HashCode.Combine(FullId, IsNullable, IsPublic);
+        }
 
         public override string ToString() => AnnotatedFullId;
     }
