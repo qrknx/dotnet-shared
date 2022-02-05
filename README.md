@@ -2,7 +2,7 @@
 Repository for libraries, analyzers and other useful things.
 
 ## Repository contents
-1. [BlazorJsBindingsGenerator (for .NET 6+ projects and VS 2022+)]()
+1. [BlazorJsBindingsGenerator (for .NET 6+ projects and VS 2022+)](#blazorjsbindingsgenerator-for-net-6-projects-and-vs-2022)
 
 ## BlazorJsBindingsGenerator (for .NET 6+ projects and VS 2022+)
 Source generator which creates extension methods for `IJSRuntime` to call JS
