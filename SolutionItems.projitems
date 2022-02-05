@@ -9,6 +9,7 @@
     <Import_RootNamespace>SolutionItems</Import_RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <None Include=".github/**/*" />
     <None Include="*" />
   </ItemGroup>
 </Project>
