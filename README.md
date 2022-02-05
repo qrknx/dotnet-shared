@@ -5,14 +5,14 @@ Repository for libraries, analyzers and other useful things.
 1. [BlazorJsBindingsGenerator (for .NET 6+ projects and VS 2022+)](#blazorjsbindingsgenerator-for-net-6-projects-and-vs-2022)
 
 ## BlazorJsBindingsGenerator (for .NET 6+ projects and VS 2022+)
-Source generator which creates extension methods for `IJSRuntime` to call JS
-methods from Blazor WASM application.
+Creates extension methods for `IJSRuntime` to call JS methods from Blazor WASM
+application.
 Generation is triggered by special attributes which are also added by generator.
 For example such source:
 ```csharp
 [JsBindingContext("BlazorBindings")]
 [JsBind("someJSMethod1", Params = typeof((int i, double d)), Returns = typeof(int))]
-[JsBind("someJSMethod2", Params = typeof((IDisposable d, int)), ResetContext = true]
+[JsBind("someJSMethod2", Params = typeof((IDisposable d, int)), ResetContext = true)]
 public static partial class JsRuntimeExtensions {}
 ```
 generates the following extension methods:
@@ -44,14 +44,14 @@ in extension methods.
 For more examples explore: [BlazorJsBindingsGenerator.Tests/JsBindingsTestData](BlazorJsBindingsGenerator.Tests/JsBindingsTestData).
 
 **Important!**
-In Blazor WASM project template Server project depends on Client project by
+Server project in Blazor WASM project template depends on Client project by
 default.
 It means that after some NuGet package is added to Client project
 Server also has access to it.
 In case of generators such behaviour is not desirable because generator will
 be also launched for Server project and thus produce extra load on IDE.
-Update `Client.csproj` with `PrivateAssets="all"` in order to disable
-transitive reference of generator in Server project:
+Update package reference in `Client.csproj` with `PrivateAssets="all"` in
+order to disable transitive reference of generator in Server project:
 ```xml
 <PackageReference Include="BlazorJsBindingsGenerator" Version="X.X.X" PrivateAssets="all" />
 ```
