@@ -10,7 +10,7 @@ public partial class BlazorJsBindingsSourceGenerator
     private const string ReturnsNullable = "ReturnsNullable";
     private const string ResetContext = "ResetContext";
 
-    private const string AttributesToUse = $@"// Auto-generated
+    public const string AttributesToUse = $@"// Auto-generated
 #nullable enable
 
 using System;

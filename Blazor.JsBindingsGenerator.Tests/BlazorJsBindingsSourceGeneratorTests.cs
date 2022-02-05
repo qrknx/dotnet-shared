@@ -4,34 +4,82 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.Json;
-using System.Threading.Tasks;
-using JsBindingsGenerator;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.JSInterop;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Blazor.JsBindingsGenerator.Tests;
+namespace JsBindingsGenerator.Tests;
 
 public class BlazorJsBindingsSourceGeneratorTests
 {
     [Fact]
-    public async Task AttributesForConsumer_Generated()
+    public void AttributesForConsumer_Generated()
     {
-        BlazorJsBindingsSourceGeneratorWrapper wrapper = new();
+        GeneratorDriverRunResult result = RunGenerator(sources: Enumerable.Empty<string>());
 
-        await wrapper.RunAsync();
+        Assert.Single(result.Results);
+
+        GeneratorRunResult runResult = result.Results.First();
+
+        Assert.Null(runResult.Exception);
+
+        Assert.Collection(runResult.GeneratedSources, AssertGeneratedAttributes());
     }
 
     [Theory]
     [ClassData(typeof(TestDataProvider))]
-    public async Task Bindings_Generated(TestCase @case)
+    public void Bindings_Generated(TestCase @case)
     {
-        BlazorJsBindingsSourceGeneratorWrapper wrapper = new()
-        {
-            WithSources = @case.Sources,
-            GeneratedJsBindings = @case.Generated,
-        };
+        GeneratorDriverRunResult result = RunGenerator(sources: @case.Sources);
 
-        await wrapper.RunAsync();
+        Assert.Single(result.Results);
+
+        GeneratorRunResult runResult = result.Results.First();
+
+        Assert.Null(runResult.Exception);
+
+        Assert.Collection(runResult.GeneratedSources,
+                          AssertGeneratedAttributes(),
+                          AssertGenerated(hintName: BlazorJsBindingsSourceGenerator.OutputFileName,
+                                          sourceText: @case.Generated));
+    }
+
+    private static GeneratorDriverRunResult RunGenerator(IEnumerable<string> sources)
+    {
+        CSharpCompilation compilation = CSharpCompilation.Create(
+            assemblyName: "Tests",
+            syntaxTrees: sources.Select(s => CSharpSyntaxTree.ParseText(s)),
+            references: GetMetadataReferences());
+
+        BlazorJsBindingsSourceGenerator generator = new();
+
+        GeneratorDriver driver = CSharpGeneratorDriver.Create(generator);
+
+        return driver.RunGenerators(compilation)
+                     .GetRunResult();
+    }
+
+    private static MetadataReference[] GetMetadataReferences() => new[]
+    {
+        MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
+        MetadataReference.CreateFromFile(typeof(IJSRuntime).Assembly.Location),
+    };
+
+    private static Action<GeneratedSourceResult> AssertGeneratedAttributes()
+    {
+        return AssertGenerated(hintName: BlazorJsBindingsSourceGenerator.AttributesOutputFileName,
+                              sourceText: BlazorJsBindingsSourceGenerator.AttributesToUse);
+    }
+
+    private static Action<GeneratedSourceResult> AssertGenerated(string hintName, string sourceText)
+    {
+        return actual =>
+        {
+            Assert.Equal(expected: hintName, actual: actual.HintName);
+            Assert.Equal(expected: sourceText, actual: actual.SourceText.ToString());
+        };
     }
 
     private class TestDataProvider : TheoryData<TestCase>
