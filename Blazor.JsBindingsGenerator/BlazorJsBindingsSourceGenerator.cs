@@ -1,28 +1,42 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using System.Collections.Immutable;
+using Microsoft.CodeAnalysis;
 
 namespace JsBindingsGenerator;
 
+/// <summary>
+/// https://github.com/dotnet/roslyn/blob/main/docs/features/incremental-generators.md
+/// https://andrewlock.net/creating-a-source-generator-part-2-testing-an-incremental-generator-with-snapshot-testing/
+/// Old <see cref="ISourceGenerator"/>:
+/// https://github.com/dotnet/roslyn/blob/main/docs/features/source-generators.cookbook.md
+/// </summary>
 [Generator]
-public partial class BlazorJsBindingsSourceGenerator : ISourceGenerator
+public partial class BlazorJsBindingsSourceGenerator : IIncrementalGenerator
 {
     public const string AttributesOutputFileName = "Attributes.g.cs";
     public const string OutputFileName = "JsBindings.g.cs";
 
-    public void Initialize(GeneratorInitializationContext context)
+    public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        context.RegisterForSyntaxNotifications(() => new SyntaxContextReceiver());
-        context.RegisterForPostInitialization(ctx => ctx.AddSource(AttributesOutputFileName, AttributesToUse));
-    }
+        context.RegisterPostInitializationOutput(
+            static ctx => ctx.AddSource(AttributesOutputFileName, AttributesToUse));
 
-    public void Execute(GeneratorExecutionContext context)
-    {
-        var receiver = (SyntaxContextReceiver)context.SyntaxContextReceiver!;
+        IncrementalValueProvider<ImmutableArray<ClassForGeneration?>> pipeline
+            = context.SyntaxProvider.CreateSyntaxProvider(
+                         predicate: IsForGeneration,
+                         transform: TryGetClassForGeneration)
+                     .WithComparer(ClassForGenerationEqualityComparer.Instance)
+                     .Where(static cfg => ShouldGenerate(cfg))
+                     .Collect();
 
-        if (receiver.ClassesForGeneration.Any())
-        {
-            string source = GenerateClasses(receiver);
+        context.RegisterSourceOutput(pipeline,
+                                     static (ctx, classes) =>
+                                     {
+                                         if (classes.Length > 0)
+                                         {
+                                             string source = GenerateClasses(classes.Select(c => c!.Value));
 
-            context.AddSource(OutputFileName, source);
-        }
+                                             ctx.AddSource(OutputFileName, source);
+                                         }
+                                     });
     }
 }

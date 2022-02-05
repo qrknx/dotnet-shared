@@ -6,6 +6,7 @@
     <!-- Do not include the generator as a lib dependency -->
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <RootNamespace>JsBindingsGenerator</RootNamespace>
   </PropertyGroup>
 
   <PropertyGroup Condition="$(Configuration) == 'Release'">

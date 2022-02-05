@@ -4,7 +4,7 @@ namespace JsBindingsGenerator;
 
 public partial class BlazorJsBindingsSourceGenerator
 {
-    private static string GenerateClasses(SyntaxContextReceiver receiver)
+    private static string GenerateClasses(IEnumerable<ClassForGeneration> classes)
     {
         StringBuilder code = new(@"// Auto-generated
 #nullable enable
@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 using Microsoft.JSInterop;
 ");
 
-        foreach (ClassForGeneration classForGeneration in receiver.ClassesForGeneration)
+        foreach (ClassForGeneration classForGeneration in classes)
         {
             code.AppendLine();
 

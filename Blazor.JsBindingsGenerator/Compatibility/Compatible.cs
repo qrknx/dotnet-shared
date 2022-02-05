@@ -1,4 +1,4 @@
-﻿namespace Blazor.JsBindingsGenerator.Compatibility;
+﻿namespace JsBindingsGenerator.Compatibility;
 
 internal static class Compatible
 {
