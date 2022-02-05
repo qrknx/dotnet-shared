@@ -2,7 +2,7 @@
 Repository for libraries, analyzers and other useful things.
 
 ## Repository contents
-1. [BlazorJsBindingsGenerator (for .NET 6+ projects and VS 2022+)]
+1. [BlazorJsBindingsGenerator (for .NET 6+ projects and VS 2022+)]()
 
 ## BlazorJsBindingsGenerator (for .NET 6+ projects and VS 2022+)
 Source generator which creates extension methods for `IJSRuntime` to call JS
@@ -21,7 +21,7 @@ public static partial class JsRuntimeExtensions
 {
     public async Task<int> SomeJSMethod1Async(this IJSRuntime js, int i, double d, CancellationToken token)
     {
-        return await js.InvokeAsync<int>("BlazorBindings.someJSMethod1" token, i, d);
+        return await js.InvokeAsync<int>("BlazorBindings.someJSMethod1", token, i, d);
     }
 
     public async Task SomeJSMethod2Async(this IJSRuntime js, global::System.IDisposable d, CancellationToken token)
