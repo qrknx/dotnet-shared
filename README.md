@@ -12,9 +12,9 @@ application.
 Generation is triggered by special attributes which are also added by generator.
 For example such source:
 ```csharp
-[JsBindingContext("BlazorBindings")]
+[JsBindingContext(Prefix = "BlazorBindings")]
 [JsBind("someJSMethod1", Params = typeof((int i, double d)), Returns = typeof(int))]
-[JsBind("someJSMethod2", Params = typeof((IDisposable d, int)), ResetContext = true)]
+[JsBind("someJSMethod2", Params = typeof((IDisposable d, int)), ResetPrefix = true)]
 public static partial class JsRuntimeExtensions {}
 ```
 generates the following extension methods:
@@ -37,11 +37,14 @@ Some notes:
    - should be defined as static partial,
    - should be non-generic,
    - shouldn't be nested in some other type.
-1. `[JsBindingContext("BlazorBindings")]` is optional.
-1. `Params = typeof((IDisposable d, int))`. Here unnamed tuple item is used to
-pass a single param in C# tuple literal. Unnamed items do not generate parameters
-in extension methods.
-1. `ResetContext = true`. Value of `[JsBindingContext(...)]` is ignored.
+1. `[JsBindingContext(Prefix = "BlazorBindings")]` is optional.
+Prefix denotes common JS path for the following `[JsBind]` attributes.
+`[JsBindingContext]` attribute can be applied several times in source file (see
+[NamingConventions_WithContext](BlazorJsBindingsGenerator.Tests/JsBindingsTestData/NamingConventions_WithContext/Source.cs) test).
+1. `Params = typeof((IDisposable d, int))`.
+Here unnamed tuple item is used to pass a single param in C# tuple literal.
+Unnamed items do not generate parameters in extension methods.
+1. `ResetPrefix = true`. Value of `[JsBindingContext(Prefix = ...)]` is ignored.
 
 For more examples explore: [BlazorJsBindingsGenerator.Tests/JsBindingsTestData](BlazorJsBindingsGenerator.Tests/JsBindingsTestData).
 
@@ -57,4 +60,3 @@ order to disable transitive reference of generator in Server project:
 ```xml
 <PackageReference Include="BlazorJsBindingsGenerator" Version="X.X.X" PrivateAssets="all" />
 ```
-

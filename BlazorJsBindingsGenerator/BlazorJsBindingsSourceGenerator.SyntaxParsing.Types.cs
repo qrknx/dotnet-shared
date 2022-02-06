@@ -8,7 +8,6 @@ public partial class BlazorJsBindingsSourceGenerator
     {
         public TypeView Type;
         public List<Signature> Signatures;
-        public string JsContext = "";
     }
 
     private sealed class ClassForGenerationEqualityComparer : IEqualityComparer<ClassForGeneration?>
@@ -20,7 +19,6 @@ public partial class BlazorJsBindingsSourceGenerator
             if (x is {} left && y is {} right)
             {
                 return left.Type.Equals(right.Type)
-                       && left.JsContext == right.JsContext
                        && left.Signatures.SequenceEqual(right.Signatures);
             }
 
@@ -35,7 +33,6 @@ public partial class BlazorJsBindingsSourceGenerator
                 {
                     int hashCode = cfg.Type.GetHashCode();
                     hashCode = (hashCode * 397) ^ cfg.Signatures.GetHashCode();
-                    hashCode = (hashCode * 397) ^ cfg.JsContext.GetHashCode();
                     return hashCode;
                 }
             }
@@ -48,14 +45,18 @@ public partial class BlazorJsBindingsSourceGenerator
     {
         public List<Param> Params;
         public string JsMember;
+        public string Prefix;
         public TypeView ReturnType;
-        public bool ResetJsContext;
+
+        public string FullJsPath => Prefix != ""
+            ? $"{Prefix}.{JsMember}"
+            : JsMember;
 
         public bool IsPublic => ReturnType.IsPublic && Params.TrueForAll(p => p.Type.IsPublic);
 
         public bool Equals(Signature other) => JsMember == other.JsMember
                                                && ReturnType.Equals(other.ReturnType)
-                                               && ResetJsContext == other.ResetJsContext
+                                               && Prefix == other.Prefix
                                                && Params.SequenceEqual(other.Params);
 
         public override bool Equals(object? obj) => obj is Signature other && Equals(other);
@@ -67,7 +68,7 @@ public partial class BlazorJsBindingsSourceGenerator
                 int hashCode = Params.GetHashCode();
                 hashCode = (hashCode * 397) ^ JsMember.GetHashCode();
                 hashCode = (hashCode * 397) ^ ReturnType.GetHashCode();
-                hashCode = (hashCode * 397) ^ ResetJsContext.GetHashCode();
+                hashCode = (hashCode * 397) ^ Prefix.GetHashCode();
                 return hashCode;
             }
         }

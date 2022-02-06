@@ -33,7 +33,9 @@ public partial class BlazorJsBindingsSourceGenerator
                                                                                  attributeLists,
                                                                                  parentSyntax);
 
-            ExtractGenerationInfo(attributeLists, ref classForGeneration, context.SemanticModel);
+            string prefix = "";
+
+            ExtractGenerationInfo(attributeLists, ref classForGeneration, ref prefix, context.SemanticModel);
 
             return classForGeneration;
         }
@@ -76,19 +78,21 @@ public partial class BlazorJsBindingsSourceGenerator
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void ExtractGenerationInfo(SyntaxList<AttributeListSyntax> attributeLists,
                                               ref ClassForGeneration classForGeneration,
+                                              ref string prefix,
                                               SemanticModel semantics)
     {
         foreach (AttributeListSyntax attributeList in attributeLists)
         {
             foreach (AttributeSyntax attribute in attributeList.Attributes)
             {
-                ExtractGenerationInfo(attribute, ref classForGeneration, semantics);
+                ExtractGenerationInfo(attribute, ref classForGeneration, ref prefix, semantics);
             }
         }
     }
 
     private static void ExtractGenerationInfo(AttributeSyntax attribute,
                                               ref ClassForGeneration classForGeneration,
+                                              ref string prefix,
                                               SemanticModel semantics)
     {
         if (semantics.GetSymbolInfo(attribute).Symbol is
@@ -99,17 +103,11 @@ public partial class BlazorJsBindingsSourceGenerator
         {
             switch (name)
             {
-                case JsBindingContextAttribute
-                    when attribute.ArgumentList is { Arguments: { Count: 1 } args }
-                         && semantics.TryGetConstValue(args[0].Expression, out string? value):
-
-                    classForGeneration.JsContext = value;
+                case JsBindingContextAttribute:
+                    ParseContext(attribute, ref prefix, semantics);
                     break;
 
-                case JsBindingContextAttribute:
-                    return;
-
-                case JsBindAttribute when TryParseSignature(attribute, semantics) is {} signature:
+                case JsBindAttribute when TryParseSignature(attribute, prefix, semantics) is {} signature:
                     classForGeneration.Signatures.Add(signature);
                     break;
 
@@ -119,7 +117,23 @@ public partial class BlazorJsBindingsSourceGenerator
         }
     }
 
-    private static Signature? TryParseSignature(AttributeSyntax attribute, SemanticModel semantics)
+    private static void ParseContext(AttributeSyntax attribute,
+                                     ref string prefix,
+                                     SemanticModel semantics)
+    {
+        foreach (AttributeArgumentSyntax arg in attribute.ArgumentList?.Arguments
+                                                ?? Enumerable.Empty<AttributeArgumentSyntax>())
+        {
+            switch (arg.NameEquals?.Name.Identifier.ValueText)
+            {
+                case Prefix when semantics.TryGetConstValue(arg.Expression, out string? value):
+                    prefix = value;
+                    break;
+            }
+        }
+    }
+
+    private static Signature? TryParseSignature(AttributeSyntax attribute, string prefix, SemanticModel semantics)
     {
         if (attribute.ArgumentList is { Arguments: { Count: >= 1 } args }
             && semantics.TryGetConstValue(args[0].Expression, out string? jsMember))
@@ -127,6 +141,7 @@ public partial class BlazorJsBindingsSourceGenerator
             Signature signature = new()
             {
                 JsMember = jsMember,
+                Prefix = prefix,
                 ReturnType = TypeView.Void,
             };
 
@@ -199,11 +214,14 @@ public partial class BlazorJsBindingsSourceGenerator
             case ReturnsNullable:
                 return false;
 
-            case ResetContext when semantics.TryGetConstValue(arg.Expression, out bool resetContext):
-                signature.ResetJsContext = resetContext;
+            case ResetPrefix when semantics.TryGetConstValue(arg.Expression, out bool resetPrefix):
+                if (resetPrefix)
+                {
+                    signature.Prefix = "";
+                }
                 return true;
 
-            case ResetContext:
+            case ResetPrefix:
                 return false;
         }
 

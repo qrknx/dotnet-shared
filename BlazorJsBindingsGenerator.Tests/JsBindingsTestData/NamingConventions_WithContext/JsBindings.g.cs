@@ -33,5 +33,10 @@ namespace A
         {
             await js.InvokeVoidAsync("BlazorCallbacks.SomePrefix.M5Async", token);
         }
+
+        public static async Task M6Async(this IJSRuntime js, CancellationToken token)
+        {
+            await js.InvokeVoidAsync("M6Async", token);
+        }
     }
 }

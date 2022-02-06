@@ -94,10 +94,7 @@ using Microsoft.JSInterop;
             code.Append("await js.InvokeVoidAsync(");
         }
 
-        code.Append(classForGeneration.JsContext != "" && !signature.ResetJsContext
-                        ? $"\"{classForGeneration.JsContext}.{signature.JsMember}\""
-                        : $"\"{signature.JsMember}\"")
-            .Append(", token");
+        code.Append($"\"{signature.FullJsPath}\", token");
 
         switch (signature.Params.Count)
         {
