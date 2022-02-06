@@ -2,9 +2,13 @@
 Repository for libraries, analyzers and other useful things.
 
 ## Repository contents
-1. [BlazorJsBindingsGenerator (for .NET 6+ projects and VS 2022+)](#blazorjsbindingsgenerator-for-net-6-projects-and-vs-2022)
+1. [dotnet-shared](#dotnet-shared)
+   1. [Repository contents](#repository-contents)
+   1. [Projects](#projects)
+      1. [BlazorJsBindingsGenerator (for .NET 6+ projects and VS 2022+)](#blazorjsbindingsgenerator-for-net-6-projects-and-vs-2022)
 
-## BlazorJsBindingsGenerator (for .NET 6+ projects and VS 2022+)
+## Projects
+### BlazorJsBindingsGenerator (for .NET 6+ projects and VS 2022+)
 *Install NuGet from https://github.com/qrknx/dotnet-shared/packages/1236876*
 
 Creates extension methods for `IJSRuntime` to call JS methods from Blazor WASM
