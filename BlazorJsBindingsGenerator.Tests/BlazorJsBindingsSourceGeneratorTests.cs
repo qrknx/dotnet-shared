@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using Xunit;
@@ -16,6 +17,7 @@ public partial class BlazorJsBindingsSourceGeneratorTests
         GeneratorRunResult runResult = result.Results.First();
 
         Assert.Null(runResult.Exception);
+        Assert.Empty(runResult.Diagnostics);
 
         Assert.Collection(runResult.GeneratedSources, AssertGeneratedAttributes());
     }
@@ -31,10 +33,36 @@ public partial class BlazorJsBindingsSourceGeneratorTests
         GeneratorRunResult runResult = result.Results.First();
 
         Assert.Null(runResult.Exception);
+        Assert.Empty(runResult.Diagnostics);
 
         Assert.Collection(runResult.GeneratedSources,
                           AssertGeneratedAttributes(),
                           AssertGenerated(hintName: BlazorJsBindingsSourceGenerator.OutputFileName,
                                           sourceText: @case.Generated));
+    }
+
+    [Fact]
+    public void Diagnostic_InvalidName_Reported()
+    {
+        List<(string Name, string Contents, bool IsGenerated)> testData
+            = GetEmbeddedTestData("BlazorJsBindingsGenerator.Tests.DiagnosticsTestData.InvalidName.").ToList();
+
+        GeneratorDriverRunResult result = RunGenerator(sources: testData.Where(d => !d.IsGenerated)
+                                                                        .Select(d => d.Contents));
+
+        Assert.Single(result.Results);
+
+        GeneratorRunResult runResult = result.Results.First();
+
+        Assert.Null(runResult.Exception);
+
+        Assert.Collection(runResult.GeneratedSources,
+                          AssertGeneratedAttributes(),
+                          AssertGenerated(hintName: BlazorJsBindingsSourceGenerator.OutputFileName,
+                                          sourceText: testData.Single(d => d.IsGenerated).Contents));
+
+        Assert.Collection(runResult.Diagnostics,
+                          AssertInvalidName,
+                          AssertInvalidName);
     }
 }

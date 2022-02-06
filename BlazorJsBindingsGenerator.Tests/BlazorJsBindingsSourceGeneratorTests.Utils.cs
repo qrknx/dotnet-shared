@@ -59,13 +59,11 @@ public partial class BlazorJsBindingsSourceGeneratorTests
         return runResult;
     }
 
-    private static CSharpCompilation CreateCompilation(IEnumerable<SyntaxTree> sources)
-    {
-        return CSharpCompilation.Create(assemblyName: "Tests",
-                                        syntaxTrees: sources,
-                                        references: MetadataReferences,
-                                        options: CompilationOptions);
-    }
+    private static CSharpCompilation CreateCompilation(IEnumerable<SyntaxTree> sources) => CSharpCompilation.Create(
+        assemblyName: "Tests",
+        syntaxTrees: sources,
+        references: MetadataReferences,
+        options: CompilationOptions);
 
     private static Action<GeneratedSourceResult> AssertGeneratedAttributes()
     {
@@ -122,41 +120,53 @@ public partial class BlazorJsBindingsSourceGeneratorTests
         };
     }
 
+    private static void AssertInvalidName(Diagnostic actual)
+    {
+        Assert.Equal(expected: DiagnosticSeverity.Error, actual.DefaultSeverity);
+        Assert.Equal(expected: "BJSBG1001", actual.Id);
+    }
+
+    private static IEnumerable<(string Name, string Contents, bool IsGenerated)> GetEmbeddedTestData(string prefix)
+    {
+        Assembly assembly = Assembly.GetExecutingAssembly();
+
+        return from name in assembly.GetManifestResourceNames()
+               where name.StartsWith(prefix, StringComparison.Ordinal)
+               select (name, ReadFile(name), IsGenerated(name));
+
+        string ReadFile(string name)
+        {
+            using Stream stream = assembly.GetManifestResourceStream(name)!;
+            using StreamReader reader = new(stream);
+
+            return reader.ReadToEnd();
+        }
+
+        static bool IsGenerated(string name)
+            => name.EndsWith(BlazorJsBindingsSourceGenerator.OutputFileName, StringComparison.Ordinal);
+    }
+
     private class JsBindingsTestDataProvider : TheoryData<TestCase>
     {
         private const string TestDataPrefix = "BlazorJsBindingsGenerator.Tests.JsBindingsTestData.";
 
         public JsBindingsTestDataProvider()
         {
-            Assembly assembly = Assembly.GetExecutingAssembly();
-
             var testCases =
-                from name in assembly.GetManifestResourceNames()
-                where name.StartsWith(TestDataPrefix, StringComparison.Ordinal)
-                let caseNameLength = name.Skip(TestDataPrefix.Length).TakeWhile(c => c != '.').Count()
-                let caseName = name[TestDataPrefix.Length..(TestDataPrefix.Length + caseNameLength + 1)]
-                group (name, Contents: ReadFile(name)) by caseName
+                from testData in GetEmbeddedTestData(TestDataPrefix)
+                let caseNameLength = testData.Name.Skip(TestDataPrefix.Length).TakeWhile(c => c != '.').Count()
+                let caseName = testData.Name[TestDataPrefix.Length..(TestDataPrefix.Length + caseNameLength + 1)]
+                group testData by caseName
                 into caseFiles
                 select new TestCase(Name: caseFiles.Key,
-                                    Sources: caseFiles.Where(f => !IsGenerated(f.name))
+                                    Sources: caseFiles.Where(f => !f.IsGenerated)
                                                       .Select(f => f.Contents),
-                                    Generated: caseFiles.Single(f => IsGenerated(f.name)).Contents);
+                                    Generated: caseFiles.Single(f => f.IsGenerated).Contents);
 
-            foreach (var testCase in testCases)
+            foreach (TestCase testCase in testCases)
             {
                 Add(testCase);
             }
-
-            string ReadFile(string name)
-            {
-                using Stream stream = assembly.GetManifestResourceStream(name)!;
-                using StreamReader reader = new(stream);
-
-                return reader.ReadToEnd();
-            }
-
-            static bool IsGenerated(string name)
-                => name.EndsWith(BlazorJsBindingsSourceGenerator.OutputFileName, StringComparison.Ordinal);
         }
     }
 

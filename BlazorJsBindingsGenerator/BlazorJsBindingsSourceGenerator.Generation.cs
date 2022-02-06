@@ -87,16 +87,10 @@ using Microsoft.JSInterop;
         {
             ");
 
-        if (hasResult)
-        {
-            code.Append($"return await js.InvokeAsync<{fullName}>(");
-        }
-        else
-        {
-            code.Append("await js.InvokeVoidAsync(");
-        }
-
-        code.Append($"\"{GetFullJsPath(signature)}\", token");
+        code.Append(hasResult 
+                        ? $"return await js.InvokeAsync<{fullName}>"
+                        : "await js.InvokeVoidAsync")
+            .Append($"(\"{GetFullJsPath(signature)}\", token");
 
         switch (signature.Params.Count)
         {
@@ -132,15 +126,15 @@ using Microsoft.JSInterop;
     {
         string jsId = Sanitize(jsPath);
 
-        // 511 is related to CS0645.
-        if (jsId.Length is 0 or > 511)
+        const string asyncSuffix = "Async";
+
+        // (511 - 5) is related to CS0645 and asyncSuffix.Length.
+        if (jsId.Length is 0 or > (511 - 5))
         {
             CouldNotCreateIdentifier.Report(signature, jsPath, ctx);
 
             return null;
         }
-
-        const string asyncSuffix = "Async";
 
         Span<char> chars = stackalloc char[jsId.Length + asyncSuffix.Length];
 

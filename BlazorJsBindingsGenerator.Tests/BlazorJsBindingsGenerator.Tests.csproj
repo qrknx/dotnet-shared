@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
@@ -7,10 +7,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="DiagnosticsTestData\**\*.cs" />
     <Compile Remove="JsBindingsTestData\**\*.cs" />
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="DiagnosticsTestData\**\*.cs" />
     <EmbeddedResource Include="JsBindingsTestData\**\*.cs" />
   </ItemGroup>
 
