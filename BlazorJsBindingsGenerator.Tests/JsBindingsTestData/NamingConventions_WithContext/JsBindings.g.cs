@@ -23,5 +23,15 @@ namespace A
         {
             await js.InvokeVoidAsync("BlazorCallbacks.M3Async", token);
         }
+
+        public static async Task SomePrefixM4Async(this IJSRuntime js, CancellationToken token)
+        {
+            await js.InvokeVoidAsync("SomePrefix.M4Async", token);
+        }
+
+        public static async Task SomePrefixM5Async(this IJSRuntime js, CancellationToken token)
+        {
+            await js.InvokeVoidAsync("BlazorCallbacks.SomePrefix.M5Async", token);
+        }
     }
 }

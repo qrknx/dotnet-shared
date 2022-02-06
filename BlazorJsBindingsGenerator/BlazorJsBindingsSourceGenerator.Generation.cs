@@ -127,6 +127,8 @@ using Microsoft.JSInterop;
 
     private unsafe static string NormalizeId(string jsId)
     {
+        jsId = Sanitize(jsId);
+
         switch (jsId)
         {
             case { Length: 0 }:
@@ -161,6 +163,40 @@ using Microsoft.JSInterop;
         fixed (char* ptr = chars)
         {
             return new string(ptr, 0, chars.Length);
+        }
+
+        static string Sanitize(string id)
+        {
+            int i = 0;
+
+            while (i < id.Length && !char.IsLetter(id[i]) && id[i] != '_')
+            {
+                ++i;
+            }
+
+            if (i < id.Length)
+            {
+                StringBuilder sb = new(capacity: id.Length - i);
+
+                sb.Append(id[i]);
+                ++i;
+
+                while (i < id.Length)
+                {
+                    char c = id[i];
+
+                    if (char.IsLetter(c) || char.IsDigit(c) || c == '_')
+                    {
+                        sb.Append(c);
+                    }
+
+                    ++i;
+                }
+
+                return sb.ToString();
+            }
+
+            return "";
         }
     }
 }
