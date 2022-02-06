@@ -1,4 +1,7 @@
-﻿namespace BlazorJsBindingsGenerator;
+﻿using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Text;
+
+namespace BlazorJsBindingsGenerator;
 
 public partial class BlazorJsBindingsSourceGenerator
 {
@@ -45,18 +48,17 @@ public partial class BlazorJsBindingsSourceGenerator
     {
         public List<Param> Params;
         public string JsMember;
-        public string Prefix;
+        public string JsPrefix;
         public TypeView ReturnType;
 
-        public string FullJsPath => Prefix != ""
-            ? $"{Prefix}.{JsMember}"
-            : JsMember;
+        public SyntaxTree SyntaxTree;
+        public TextSpan TextSpan;
 
         public bool IsPublic => ReturnType.IsPublic && Params.TrueForAll(p => p.Type.IsPublic);
 
         public bool Equals(Signature other) => JsMember == other.JsMember
                                                && ReturnType.Equals(other.ReturnType)
-                                               && Prefix == other.Prefix
+                                               && JsPrefix == other.JsPrefix
                                                && Params.SequenceEqual(other.Params);
 
         public override bool Equals(object? obj) => obj is Signature other && Equals(other);
@@ -68,7 +70,7 @@ public partial class BlazorJsBindingsSourceGenerator
                 int hashCode = Params.GetHashCode();
                 hashCode = (hashCode * 397) ^ JsMember.GetHashCode();
                 hashCode = (hashCode * 397) ^ ReturnType.GetHashCode();
-                hashCode = (hashCode * 397) ^ Prefix.GetHashCode();
+                hashCode = (hashCode * 397) ^ JsPrefix.GetHashCode();
                 return hashCode;
             }
         }

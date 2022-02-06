@@ -33,7 +33,7 @@ public partial class BlazorJsBindingsSourceGenerator : IIncrementalGenerator
                                      {
                                          if (classes.Length > 0)
                                          {
-                                             string source = GenerateClasses(classes.Select(c => c!.Value));
+                                             string source = GenerateSourceText(classes.Select(c => c!.Value), ctx);
 
                                              ctx.AddSource(OutputFileName, source);
                                          }

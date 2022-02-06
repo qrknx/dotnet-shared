@@ -126,7 +126,7 @@ public partial class BlazorJsBindingsSourceGenerator
         {
             switch (arg.NameEquals?.Name.Identifier.ValueText)
             {
-                case Prefix when semantics.TryGetConstValue(arg.Expression, out string? value):
+                case JsPrefix when semantics.TryGetConstValue(arg.Expression, out string? value):
                     prefix = value;
                     break;
             }
@@ -141,8 +141,10 @@ public partial class BlazorJsBindingsSourceGenerator
             Signature signature = new()
             {
                 JsMember = jsMember,
-                Prefix = prefix,
+                JsPrefix = prefix,
                 ReturnType = TypeView.Void,
+                SyntaxTree = attribute.SyntaxTree,
+                TextSpan = attribute.Span,
             };
 
             for (int i = 1; i < args.Count; ++i)
@@ -214,14 +216,14 @@ public partial class BlazorJsBindingsSourceGenerator
             case ReturnsNullable:
                 return false;
 
-            case ResetPrefix when semantics.TryGetConstValue(arg.Expression, out bool resetPrefix):
+            case ResetJsPrefix when semantics.TryGetConstValue(arg.Expression, out bool resetPrefix):
                 if (resetPrefix)
                 {
-                    signature.Prefix = "";
+                    signature.JsPrefix = "";
                 }
                 return true;
 
-            case ResetPrefix:
+            case ResetJsPrefix:
                 return false;
         }
 

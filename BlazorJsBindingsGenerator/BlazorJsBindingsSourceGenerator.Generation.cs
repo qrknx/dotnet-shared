@@ -1,10 +1,11 @@
 ﻿using System.Text;
+using Microsoft.CodeAnalysis;
 
 namespace BlazorJsBindingsGenerator;
 
 public partial class BlazorJsBindingsSourceGenerator
 {
-    private static string GenerateClasses(IEnumerable<ClassForGeneration> classes)
+    private static string GenerateSourceText(IEnumerable<ClassForGeneration> classes, SourceProductionContext ctx)
     {
         StringBuilder code = new(@"// Auto-generated
 #nullable enable
@@ -18,13 +19,15 @@ using Microsoft.JSInterop;
         {
             code.AppendLine();
 
-            GenerateClass(classForGeneration, code);
+            GenerateClass(classForGeneration, code, ctx);
         }
 
         return code.ToString();
     }
 
-    private static void GenerateClass(in ClassForGeneration classForGeneration, StringBuilder code)
+    private static void GenerateClass(in ClassForGeneration classForGeneration,
+                                      StringBuilder code,
+                                      SourceProductionContext ctx)
     {
         code.Append($@"namespace {classForGeneration.Type.ContainingParentsPath}
 {{
@@ -37,8 +40,11 @@ using Microsoft.JSInterop;
 
         foreach (Signature signature in classForGeneration.Signatures)
         {
-            code.AppendLine();
-            GenerateMethod(signature, classForGeneration, code);
+            if (TryGetCSharpId(signature.JsMember, signature, ctx) is {} csharpId)
+            {
+                code.AppendLine();
+                GenerateMethod(csharpId, signature, code);
+            }
         }
 
         code.Append(@"    }
@@ -48,9 +54,7 @@ using Microsoft.JSInterop;
 ");
     }
 
-    private static void GenerateMethod(in Signature signature,
-                                       in ClassForGeneration classForGeneration,
-                                       StringBuilder code)
+    private static void GenerateMethod(string csharpId, in Signature signature, StringBuilder code)
     {
         bool hasResult = !signature.ReturnType.Equals(TypeView.Void);
 
@@ -68,13 +72,11 @@ using Microsoft.JSInterop;
             returnType = "Task";
         }
 
-        string normalizedName = NormalizeId(signature.JsMember);
-
         string access = signature.IsPublic
             ? "public"
             : "internal";
 
-        code.Append($"        {access} static async {returnType} {normalizedName}(this IJSRuntime js");
+        code.Append($"        {access} static async {returnType} {csharpId}(this IJSRuntime js");
 
         foreach (Param param in signature.Params)
         {
@@ -94,7 +96,7 @@ using Microsoft.JSInterop;
             code.Append("await js.InvokeVoidAsync(");
         }
 
-        code.Append($"\"{signature.FullJsPath}\", token");
+        code.Append($"\"{GetFullJsPath(signature)}\", token");
 
         switch (signature.Params.Count)
         {
@@ -122,18 +124,20 @@ using Microsoft.JSInterop;
 ");
     }
 
-    private unsafe static string NormalizeId(string jsId)
+    private static string GetFullJsPath(in Signature signature) => signature.JsPrefix != ""
+        ? $"{signature.JsPrefix}.{signature.JsMember}"
+        : signature.JsMember;
+
+    private unsafe static string? TryGetCSharpId(string jsPath, in Signature signature, SourceProductionContext ctx)
     {
-        jsId = Sanitize(jsId);
+        string jsId = Sanitize(jsPath);
 
-        switch (jsId)
+        // 511 is related to CS0645.
+        if (jsId.Length is 0 or > 511)
         {
-            case { Length: 0 }:
-                throw new Exception("Empty string cannot be used as identifier.");
+            CouldNotCreateIdentifier.Report(signature, jsPath, ctx);
 
-            // CS0645
-            case { Length: > 511 }:
-                throw new Exception("Identifier too long.");
+            return null;
         }
 
         const string asyncSuffix = "Async";

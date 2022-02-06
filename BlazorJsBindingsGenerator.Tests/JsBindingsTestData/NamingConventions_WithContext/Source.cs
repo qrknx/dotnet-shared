@@ -2,12 +2,12 @@
 
 namespace A;
 
-[JsBindingContext(Prefix = "BlazorCallbacks")]
+[JsBindingContext(JsPrefix = "BlazorCallbacks")]
 [JsBind("M1Async")]
-[JsBind("M2Async", ResetPrefix = true)]
-[JsBind("M3Async", ResetPrefix = false)]
-[JsBind("SomePrefix.M4Async", ResetPrefix = true)]
+[JsBind("M2Async", ResetJsPrefix = true)]
+[JsBind("M3Async", ResetJsPrefix = false)]
+[JsBind("SomePrefix.M4Async", ResetJsPrefix = true)]
 [JsBind("SomePrefix.M5Async")]
-[JsBindingContext(Prefix = "")]
+[JsBindingContext(JsPrefix = "")]
 [JsBind("M6Async")]
 public static partial class B {}

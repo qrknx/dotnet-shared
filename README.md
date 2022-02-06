@@ -12,9 +12,9 @@ application.
 Generation is triggered by special attributes which are also added by generator.
 For example such source:
 ```csharp
-[JsBindingContext(Prefix = "BlazorBindings")]
+[JsBindingContext(JsPrefix = "BlazorBindings")]
 [JsBind("someJSMethod1", Params = typeof((int i, double d)), Returns = typeof(int))]
-[JsBind("someJSMethod2", Params = typeof((IDisposable d, int)), ResetPrefix = true)]
+[JsBind("someJSMethod2", Params = typeof((IDisposable d, int)), ResetJsPrefix = true)]
 public static partial class JsRuntimeExtensions {}
 ```
 generates the following extension methods:
@@ -37,14 +37,15 @@ Some notes:
    - should be defined as static partial,
    - should be non-generic,
    - shouldn't be nested in some other type.
-1. `[JsBindingContext(Prefix = "BlazorBindings")]` is optional.
-Prefix denotes common JS path for the following `[JsBind]` attributes.
+1. `[JsBindingContext(JsPrefix = "BlazorBindings")]` is optional.
+JsPrefix denotes common JS path for the following `[JsBind]` attributes.
 `[JsBindingContext]` attribute can be applied several times in source file (see
 [NamingConventions_WithContext](BlazorJsBindingsGenerator.Tests/JsBindingsTestData/NamingConventions_WithContext/Source.cs) test).
 1. `Params = typeof((IDisposable d, int))`.
 Here unnamed tuple item is used to pass a single param in C# tuple literal.
 Unnamed items do not generate parameters in extension methods.
-1. `ResetPrefix = true`. Value of `[JsBindingContext(Prefix = ...)]` is ignored.
+1. `ResetJsPrefix = true`.
+Value of `[JsBindingContext(JsPrefix = ...)]` is ignored.
 
 For more examples explore: [BlazorJsBindingsGenerator.Tests/JsBindingsTestData](BlazorJsBindingsGenerator.Tests/JsBindingsTestData).
 
