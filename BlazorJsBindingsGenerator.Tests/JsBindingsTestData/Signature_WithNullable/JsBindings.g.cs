@@ -33,5 +33,10 @@ namespace A
         {
             return await js.InvokeAsync<global::A.CustomStruct?[]>("M5Async", token);
         }
+
+        public static async Task M6Async(this IJSRuntime js, object[]? os, CancellationToken token)
+        {
+            await js.InvokeVoidAsync("M6Async", token, (object?)os);
+        }
     }
 }

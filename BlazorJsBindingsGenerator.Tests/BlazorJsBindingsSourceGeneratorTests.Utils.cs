@@ -3,7 +3,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Text.Json;
+using DiffPlex.Chunkers;
+using DiffPlex.DiffBuilder;
+using DiffPlex.DiffBuilder.Model;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Emit;
@@ -74,7 +78,47 @@ public partial class BlazorJsBindingsSourceGeneratorTests
         return actual =>
         {
             Assert.Equal(expected: hintName, actual: actual.HintName);
-            Assert.Equal(expected: sourceText, actual: actual.SourceText.ToString());
+
+            string actualSourceText = actual.SourceText.ToString();
+
+            if (sourceText != actualSourceText)
+            {
+                DiffPaneModel diff = InlineDiffBuilder.Instance.BuildDiffModel(sourceText,
+                                                                               actualSourceText,
+                                                                               ignoreWhitespace: false,
+                                                                               ignoreCase: false,
+                                                                               LineChunker.Instance);
+
+                StringBuilder sb = new();
+
+                sb.AppendLine("Actual and expected values differ. Expected shown in baseline of diff:");
+
+                if (!diff.Lines.Any(line => line.Type is ChangeType.Inserted or ChangeType.Deleted))
+                {
+                    // We have a failure only caused by line ending differences; recalculate with line endings visible
+                    diff = InlineDiffBuilder.Instance.BuildDiffModel(sourceText,
+                                                                     actualSourceText,
+                                                                     ignoreWhitespace: false,
+                                                                     ignoreCase: false,
+                                                                     LineEndingsPreservingChunker.Instance);
+                }
+
+                foreach (DiffPiece line in diff.Lines)
+                {
+                    sb.Append(line.Type switch
+                    {
+                        ChangeType.Inserted => '+',
+                        ChangeType.Deleted => '-',
+                        _ => ' ',
+                    });
+
+                    sb.AppendLine(line.Text
+                                      .Replace("\r", "<CR>")
+                                      .Replace("\n", "<LF>"));
+                }
+
+                Assert.True(false, sb.ToString());
+            }
         };
     }
 

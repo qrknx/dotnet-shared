@@ -12,4 +12,5 @@ public struct CustomStruct {}
 [JsBind("M3Async", Returns = typeof(object?[]))]
 [JsBind("M4Async", Returns = typeof(IList?[]))]
 [JsBind("M5Async", Returns = typeof(CustomStruct?[]))]
+[JsBind("M6Async", Params = typeof((object[]? os, int)))]
 public static partial class B {}
