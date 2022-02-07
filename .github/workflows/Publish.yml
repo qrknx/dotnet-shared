@@ -43,3 +43,4 @@ jobs:
     - name: Publish
       run: |
         dotnet nuget push BlazorJsBindingsGenerator/bin/Release/BlazorJsBindingsGenerator.${{ steps.find_tag.outputs.new_tag }}.nupkg --source https://nuget.pkg.github.com/qrknx/index.json --api-key ${{ secrets.PACKAGES_TOKEN }}
+        dotnet nuget push DotNetToolbox/bin/Release/DotNetToolbox.${{ steps.find_tag.outputs.new_tag }}.nupkg --source https://nuget.pkg.github.com/qrknx/index.json --api-key ${{ secrets.PACKAGES_TOKEN }}

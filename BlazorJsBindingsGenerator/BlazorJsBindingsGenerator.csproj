@@ -17,7 +17,6 @@ https://github.com/dotnet/docs/issues/27661
 -->
     <NoWarn>$(NoWarn);NU5128</NoWarn>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <RepositoryUrl>https://github.com/qrknx/dotnet-shared</RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>
