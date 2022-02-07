@@ -19,14 +19,14 @@ jobs:
       uses: anothrNick/github-tag-action@1.36.0
       env:
         GITHUB_TOKEN: ${{ secrets.PACKAGES_TOKEN }}
-        WITH_V: true
+        WITH_V: false
         DRY_RUN: true
-        INITIAL_VERSION: v0.9.25
+        INITIAL_VERSION: 0.9.22
         DEFAULT_BUMP: patch
     - name: Define version
       run: echo "package_version=0.9.$GITHUB_RUN_NUMBER" >> $GITHUB_ENV
     - name: Print
-      run: echo "Tag is $env.new_tag $env.tag"
+      run: echo "Tag is $ {{ env.new_tag }} $ {{ env.tag }}"
     - name: Restore dependencies
       run: dotnet restore DotNet.Shared.sln
     - name: Build
