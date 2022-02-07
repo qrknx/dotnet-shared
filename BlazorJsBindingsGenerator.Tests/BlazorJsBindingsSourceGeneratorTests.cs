@@ -37,14 +37,12 @@ public partial class BlazorJsBindingsSourceGeneratorTests
     [Fact]
     public void Diagnostic_InvalidName_Reported()
     {
-        GeneratorRunResult runResult = RunGenerator(
-            sources: InvalidNameTestData.Where(d => !d.IsGenerated)
-                                        .Select(d => d.Contents));
+        GeneratorRunResult runResult = RunGenerator(sources: InvalidNameTestData.Sources);
 
         Assert.Collection(runResult.GeneratedSources,
                           AssertGeneratedAttributes(),
                           AssertGenerated(hintName: BlazorJsBindingsSourceGenerator.OutputFileName,
-                                          sourceText: InvalidNameTestData.Single(d => d.IsGenerated).Contents));
+                                          sourceText: InvalidNameTestData.Generated));
 
         Assert.Collection(runResult.Diagnostics,
                           AssertInvalidName,
@@ -56,9 +54,7 @@ public partial class BlazorJsBindingsSourceGeneratorTests
     {
         using MemoryStream stream = new();
 
-        RunGenerator(sources: InvalidNameTestData.Where(d => !d.IsGenerated)
-                                                 .Select(d => d.Contents),
-                     outDll: stream);
+        RunGenerator(sources: InvalidNameTestData.Sources, outDll: stream);
 
         Assembly assembly = Assembly.Load(stream.ToArray());
 

@@ -41,9 +41,6 @@ public partial class BlazorJsBindingsSourceGeneratorTests
               nullableContextOptions: NullableContextOptions.Enable,
               optimizationLevel: OptimizationLevel.Release);
 
-    private static readonly (string Name, string Contents, bool IsGenerated)[] InvalidNameTestData
-        = GetEmbeddedTestData("BlazorJsBindingsGenerator.Tests.DiagnosticsTestData.InvalidName.").ToArray();
-
     private static GeneratorRunResult RunGenerator(IEnumerable<string> sources)
     {
         return RunGenerator(sources, outDll: Stream.Null);
@@ -163,6 +160,18 @@ public partial class BlazorJsBindingsSourceGeneratorTests
 
         static bool IsGenerated(string name)
             => name.EndsWith(BlazorJsBindingsSourceGenerator.OutputFileName, StringComparison.Ordinal);
+    }
+
+    private static class InvalidNameTestData
+    {
+        private static readonly (string Name, string Contents, bool IsGenerated)[] TestData
+            = GetEmbeddedTestData("BlazorJsBindingsGenerator.Tests.DiagnosticsTestData.InvalidName.").ToArray();
+
+        public static readonly string[] Sources = TestData.Where(d => !d.IsGenerated)
+                                                          .Select(d => d.Contents)
+                                                          .ToArray();
+
+        public static readonly string Generated = TestData.Single(d => d.IsGenerated).Contents;
     }
 
     private class JsBindingsTestDataProvider : TheoryData<TestCase>
