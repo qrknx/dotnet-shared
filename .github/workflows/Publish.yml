@@ -29,7 +29,7 @@ jobs:
         INITIAL_VERSION: 0.9.22
         DEFAULT_BUMP: patch
     - name: Print
-      run: echo "Tag is $ {{ steps.create_tag.outputs.new_tag }} $ {{ steps.create_tag.outputs.tag }}"
+      run: echo "Tag is ${{ steps.create_tag.outputs.new_tag }} ${{ steps.create_tag.outputs.tag }}"
     - name: Build
       run: dotnet build --configuration Release --no-restore /p:Version=$package_version DotNet.Shared.sln
     - name: Test
