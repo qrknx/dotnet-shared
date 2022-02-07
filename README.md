@@ -1,4 +1,4 @@
-﻿# dotnet-shared
+# dotnet-shared ![example workflow](https://github.com/qrknx/dotnet-shared/actions/workflows/Publish.yml/badge.svg)
 Repository for libraries, analyzers and other useful things.
 
 ## Repository contents
