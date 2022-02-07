@@ -15,12 +15,13 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 6.0.x
-    - name: Define version
-      run: echo "package_version=0.9.$GITHUB_RUN_NUMBER" >> $GITHUB_ENV
+    #- name: Define version
+    #  run: echo "package_version=0.9.$GITHUB_RUN_NUMBER" >> $GITHUB_ENV
     - name: Restore dependencies
       run: dotnet restore DotNet.Shared.sln
-    - name: Create tag
-      id: create_tag
+    - name: Find tag
+      # IMPORTANT: this is dry run, tag is created below!
+      id: find_tag
       uses: anothrNick/github-tag-action@1.36.0
       env:
         GITHUB_TOKEN: ${{ secrets.PACKAGES_TOKEN }}
@@ -28,12 +29,17 @@ jobs:
         DRY_RUN: true
         INITIAL_VERSION: 0.9.22
         DEFAULT_BUMP: patch
-    - name: Print
-      run: echo "Tag is ${{ steps.create_tag.outputs.new_tag }} ${{ steps.create_tag.outputs.tag }}"
     - name: Build
-      run: dotnet build --configuration Release --no-restore /p:Version=$package_version DotNet.Shared.sln
+      run: dotnet build --configuration Release --no-restore /p:Version=${{ steps.find_tag.outputs.new_tag }} DotNet.Shared.sln
     - name: Test
       run: dotnet test --configuration Release --no-build --verbosity normal DotNet.Shared.sln
-    #- name: Publish
-    #  run: |
-    #    dotnet nuget push BlazorJsBindingsGenerator/bin/Release/BlazorJsBindingsGenerator.$package_version.nupkg --source https://nuget.pkg.github.com/qrknx/index.json --api-key ${{ secrets.PACKAGES_TOKEN }}
+    - name: Create tag
+      uses: anothrNick/github-tag-action@1.36.0
+      env:
+        GITHUB_TOKEN: ${{ secrets.PACKAGES_TOKEN }}
+        WITH_V: false
+        INITIAL_VERSION: 0.9.22
+        DEFAULT_BUMP: patch
+    - name: Publish
+      run: |
+        dotnet nuget push BlazorJsBindingsGenerator/bin/Release/BlazorJsBindingsGenerator.${{ steps.find_tag.outputs.new_tag }}.nupkg --source https://nuget.pkg.github.com/qrknx/index.json --api-key ${{ secrets.PACKAGES_TOKEN }}
