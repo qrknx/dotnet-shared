@@ -9,18 +9,30 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+      with:
+        fetch-depth: '0'
     - name: Setup .NET
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 6.0.x
+    - name: Find version
+      uses: anothrNick/github-tag-action@1.36.0
+      env:
+        GITHUB_TOKEN: ${{ secrets.PACKAGES_TOKEN }}
+        WITH_V: true
+        DRY_RUN: true
+        INITIAL_VERSION: 0.9.25
+        RELEASE_BRANCHES: master,main
     - name: Define version
       run: echo "package_version=0.9.$GITHUB_RUN_NUMBER" >> $GITHUB_ENV
+    - name: Print
+      run: "Tag is $new_tag $tag"
     - name: Restore dependencies
       run: dotnet restore DotNet.Shared.sln
     - name: Build
       run: dotnet build --configuration Release --no-restore /p:Version=$package_version DotNet.Shared.sln
     - name: Test
       run: dotnet test --configuration Release --no-build --verbosity normal DotNet.Shared.sln
-    - name: Publish
-      run: |
-        dotnet nuget push BlazorJsBindingsGenerator/bin/Release/BlazorJsBindingsGenerator.$package_version.nupkg --source https://nuget.pkg.github.com/qrknx/index.json --api-key ${{ secrets.PACKAGES_TOKEN }}
+    #- name: Publish
+    #  run: |
+    #    dotnet nuget push BlazorJsBindingsGenerator/bin/Release/BlazorJsBindingsGenerator.$package_version.nupkg --source https://nuget.pkg.github.com/qrknx/index.json --api-key ${{ secrets.PACKAGES_TOKEN }}
