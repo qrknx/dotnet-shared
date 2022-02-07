@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -52,11 +51,7 @@ public partial class BlazorJsBindingsSourceGeneratorTests
     [Fact]
     public void Attributes_NotVisible()
     {
-        using MemoryStream stream = new();
-
-        RunGenerator(sources: InvalidNameTestData.Sources, outDll: stream);
-
-        Assembly assembly = Assembly.Load(stream.ToArray());
+        RunGenerator(sources: InvalidNameTestData.Sources, out Assembly assembly);
 
         Type type = assembly.GetType("N.C", throwOnError: true)!;
 

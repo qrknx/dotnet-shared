@@ -8,7 +8,7 @@ public partial class BlazorJsBindingsSourceGenerator
     private static class CouldNotCreateIdentifier
     {
         private static readonly DiagnosticDescriptor Descriptor = new(
-            id: "BJSBG1001",
+            id: "BJSB1001",
             title: "Couldn't create identifier",
             messageFormat: "Couldn't create identifier for JS expression `{0}`",
             category: "Naming",

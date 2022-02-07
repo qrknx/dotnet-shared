@@ -41,12 +41,9 @@ public partial class BlazorJsBindingsSourceGeneratorTests
               nullableContextOptions: NullableContextOptions.Enable,
               optimizationLevel: OptimizationLevel.Release);
 
-    private static GeneratorRunResult RunGenerator(IEnumerable<string> sources)
-    {
-        return RunGenerator(sources, outDll: Stream.Null);
-    }
+    private static GeneratorRunResult RunGenerator(IEnumerable<string> sources) => RunGenerator(sources, out _);
 
-    private static GeneratorRunResult RunGenerator(IEnumerable<string> sources, Stream outDll)
+    private static GeneratorRunResult RunGenerator(IEnumerable<string> sources, out Assembly assembly)
     {
         List<SyntaxTree> sourceSyntaxTrees = sources.Select(s => CSharpSyntaxTree.ParseText(s)).ToList();
 
@@ -67,19 +64,23 @@ public partial class BlazorJsBindingsSourceGeneratorTests
 
         CSharpCompilation fullCompilation = CreateCompilation(allSources);
 
-        EmitResult emitResult = fullCompilation.Emit(outDll);
+        using MemoryStream stream = new();
+
+        EmitResult emitResult = fullCompilation.Emit(stream);
 
         Assert.True(emitResult.Success);
         Assert.Empty(emitResult.Diagnostics);
+
+        assembly = Assembly.Load(stream.ToArray());
 
         return runResult;
     }
 
     private static CSharpCompilation CreateCompilation(IEnumerable<SyntaxTree> sources) => CSharpCompilation.Create(
         assemblyName: "Tests",
-        syntaxTrees: sources,
-        references: MetadataReferences,
-        options: CompilationOptions);
+        sources,
+        MetadataReferences,
+        CompilationOptions);
 
     private static Action<GeneratedSourceResult> AssertGeneratedAttributes()
     {
@@ -139,7 +140,7 @@ public partial class BlazorJsBindingsSourceGeneratorTests
     private static void AssertInvalidName(Diagnostic actual)
     {
         Assert.Equal(expected: DiagnosticSeverity.Error, actual.DefaultSeverity);
-        Assert.Equal(expected: "BJSBG1001", actual.Id);
+        Assert.Equal(expected: "BJSB1001", actual.Id);
     }
 
     private static IEnumerable<(string Name, string Contents, bool IsGenerated)> GetEmbeddedTestData(string prefix)
