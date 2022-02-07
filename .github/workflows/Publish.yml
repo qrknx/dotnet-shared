@@ -21,12 +21,11 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.PACKAGES_TOKEN }}
         WITH_V: true
         DRY_RUN: true
-        INITIAL_VERSION: 0.9.25
-        RELEASE_BRANCHES: master,main
+        INITIAL_VERSION: v0.9.25
     - name: Define version
       run: echo "package_version=0.9.$GITHUB_RUN_NUMBER" >> $GITHUB_ENV
     - name: Print
-      run: "Tag is $new_tag $tag"
+      run: echo "Tag is $new_tag $tag"
     - name: Restore dependencies
       run: dotnet restore DotNet.Shared.sln
     - name: Build
