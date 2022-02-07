@@ -1,5 +1,8 @@
-using System.Collections.Generic;
+using System;
+using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using Microsoft.CodeAnalysis;
 using Xunit;
 
@@ -10,13 +13,8 @@ public partial class BlazorJsBindingsSourceGeneratorTests
     [Fact]
     public void AttributesForConsumer_Generated()
     {
-        GeneratorDriverRunResult result = RunGenerator(sources: Enumerable.Empty<string>());
+        GeneratorRunResult runResult = RunGenerator(sources: Enumerable.Empty<string>());
 
-        Assert.Single(result.Results);
-
-        GeneratorRunResult runResult = result.Results.First();
-
-        Assert.Null(runResult.Exception);
         Assert.Empty(runResult.Diagnostics);
 
         Assert.Collection(runResult.GeneratedSources, AssertGeneratedAttributes());
@@ -26,13 +24,8 @@ public partial class BlazorJsBindingsSourceGeneratorTests
     [ClassData(typeof(JsBindingsTestDataProvider))]
     public void Bindings_Generated(TestCase @case)
     {
-        GeneratorDriverRunResult result = RunGenerator(sources: @case.Sources);
+        GeneratorRunResult runResult = RunGenerator(sources: @case.Sources);
 
-        Assert.Single(result.Results);
-
-        GeneratorRunResult runResult = result.Results.First();
-
-        Assert.Null(runResult.Exception);
         Assert.Empty(runResult.Diagnostics);
 
         Assert.Collection(runResult.GeneratedSources,
@@ -44,25 +37,36 @@ public partial class BlazorJsBindingsSourceGeneratorTests
     [Fact]
     public void Diagnostic_InvalidName_Reported()
     {
-        List<(string Name, string Contents, bool IsGenerated)> testData
-            = GetEmbeddedTestData("BlazorJsBindingsGenerator.Tests.DiagnosticsTestData.InvalidName.").ToList();
-
-        GeneratorDriverRunResult result = RunGenerator(sources: testData.Where(d => !d.IsGenerated)
-                                                                        .Select(d => d.Contents));
-
-        Assert.Single(result.Results);
-
-        GeneratorRunResult runResult = result.Results.First();
-
-        Assert.Null(runResult.Exception);
+        GeneratorRunResult runResult = RunGenerator(
+            sources: InvalidNameTestData.Where(d => !d.IsGenerated)
+                                        .Select(d => d.Contents));
 
         Assert.Collection(runResult.GeneratedSources,
                           AssertGeneratedAttributes(),
                           AssertGenerated(hintName: BlazorJsBindingsSourceGenerator.OutputFileName,
-                                          sourceText: testData.Single(d => d.IsGenerated).Contents));
+                                          sourceText: InvalidNameTestData.Single(d => d.IsGenerated).Contents));
 
         Assert.Collection(runResult.Diagnostics,
                           AssertInvalidName,
                           AssertInvalidName);
+    }
+
+    [Fact]
+    public void Attributes_NotVisible()
+    {
+        using MemoryStream stream = new();
+
+        RunGenerator(sources: InvalidNameTestData.Where(d => !d.IsGenerated)
+                                                 .Select(d => d.Contents),
+                     outDll: stream);
+
+        Assembly assembly = Assembly.Load(stream.ToArray());
+
+        Type type = assembly.GetType("N.C", throwOnError: true)!;
+
+        Assert.NotNull(type);
+
+        Assert.Collection(type.GetCustomAttributes(),
+                          attribute => Assert.IsType<ExtensionAttribute>(attribute));
     }
 }

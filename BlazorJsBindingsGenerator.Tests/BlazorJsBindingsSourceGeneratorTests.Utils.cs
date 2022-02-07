@@ -28,6 +28,8 @@ public partial class BlazorJsBindingsSourceGeneratorTests
         MetadataReference.CreateFromFile(typeof(IJSRuntime).Assembly.Location),
     };
 
+    // /define:SOME compilation options belong to CSharpParseOptions.
+    // They are among parameters of CSharpSyntaxTree.ParseText and CSharpGeneratorDriver.Create methods.
     private static readonly CSharpCompilationOptions CompilationOptions
         = new(OutputKind.DynamicallyLinkedLibrary,
               specificDiagnosticOptions: CSharpCommandLineParser.Default
@@ -36,9 +38,18 @@ public partial class BlazorJsBindingsSourceGeneratorTests
                                                                        sdkDirectory: Environment.CurrentDirectory)
                                                                 .CompilationOptions
                                                                 .SpecificDiagnosticOptions,
-              nullableContextOptions: NullableContextOptions.Enable);
+              nullableContextOptions: NullableContextOptions.Enable,
+              optimizationLevel: OptimizationLevel.Release);
 
-    private static GeneratorDriverRunResult RunGenerator(IEnumerable<string> sources)
+    private static readonly (string Name, string Contents, bool IsGenerated)[] InvalidNameTestData
+        = GetEmbeddedTestData("BlazorJsBindingsGenerator.Tests.DiagnosticsTestData.InvalidName.").ToArray();
+
+    private static GeneratorRunResult RunGenerator(IEnumerable<string> sources)
+    {
+        return RunGenerator(sources, outDll: Stream.Null);
+    }
+
+    private static GeneratorRunResult RunGenerator(IEnumerable<string> sources, Stream outDll)
     {
         List<SyntaxTree> sourceSyntaxTrees = sources.Select(s => CSharpSyntaxTree.ParseText(s)).ToList();
 
@@ -46,15 +57,23 @@ public partial class BlazorJsBindingsSourceGeneratorTests
 
         BlazorJsBindingsSourceGenerator generator = new();
 
-        GeneratorDriverRunResult runResult = CSharpGeneratorDriver.Create(generator)
-                                                                  .RunGenerators(compilation)
-                                                                  .GetRunResult();
+        GeneratorDriverRunResult generatorDriverRunResult = CSharpGeneratorDriver.Create(generator)
+                                                                                 .RunGenerators(compilation)
+                                                                                 .GetRunResult();
 
-        CSharpCompilation fullCompilation = CreateCompilation(sourceSyntaxTrees.Concat(runResult.GeneratedTrees));
+        GeneratorRunResult runResult = Assert.Single(generatorDriverRunResult.Results);
 
-        EmitResult emitResult = fullCompilation.Emit(Stream.Null);
+        Assert.Null(runResult.Exception);
+
+        IEnumerable<SyntaxTree> allSources = sourceSyntaxTrees.Concat(
+            runResult.GeneratedSources.Select(s => s.SyntaxTree));
+
+        CSharpCompilation fullCompilation = CreateCompilation(allSources);
+
+        EmitResult emitResult = fullCompilation.Emit(outDll);
 
         Assert.True(emitResult.Success);
+        Assert.Empty(emitResult.Diagnostics);
 
         return runResult;
     }

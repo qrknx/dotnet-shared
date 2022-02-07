@@ -2,7 +2,6 @@
 using System.Collections;
 using BlazorJsBindingsGenerator;
 using Double = System.Int16;
-using Int16 = System.Single;
 
 namespace A;
 
